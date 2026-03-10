@@ -109,7 +109,13 @@ def test_matmul():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--variant",
-        choices=["auto-sync", "manual-sync", "all"],
+        choices=[
+            "step1-baseline",
+            "step2-doublebuffer",
+            "step3-swizzle",
+            "step4-manual-pipelining",
+            "all",
+        ],
         default="all",
         help="Which kernel variant to run.",
     )
@@ -119,11 +125,18 @@ def test_matmul():
     torch.npu.set_device(device)
 
     variants = {
-        "auto-sync": "./simple_matmul_auto_sync_kernel.so",
-        "manual-sync": "./simple_matmul_manual_sync_kernel.so",
+        "step1-baseline": "./build_artifacts/step1_baseline_kernel.so",
+        "step2-doublebuffer": "./build_artifacts/step2_doublebuffer_kernel.so",
+        "step3-swizzle": "./build_artifacts/step3_swizzle_kernel.so",
+        "step4-manual-pipelining": "./build_artifacts/step4_manual_pipelining_kernel.so",
     }
     if args.variant == "all":
-        selected = [("auto-sync", variants["auto-sync"]), ("manual-sync", variants["manual-sync"])]
+        selected = [
+            ("step1-baseline", variants["step1-baseline"]),
+            ("step2-doublebuffer", variants["step2-doublebuffer"]),
+            ("step3-swizzle", variants["step3-swizzle"]),
+            ("step4-manual-pipelining", variants["step4-manual-pipelining"]),
+        ]
     else:
         selected = [(args.variant, variants[args.variant])]
 
