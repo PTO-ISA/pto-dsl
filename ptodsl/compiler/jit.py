@@ -21,6 +21,12 @@ def _is_ptr_type(type_obj):
 
 def _ptr_elem_cpp_type(type_obj):
     type_repr = _type_repr(type_obj)
+    if "e8m0" in type_repr:
+        return "float8_e8m0_t"
+    if "e4m3" in type_repr:
+        return "float8_e4m3_t"
+    if "e5m2" in type_repr:
+        return "float8_e5m2_t"
     if "f32" in type_repr:
         return "float"
     if "f16" in type_repr:
@@ -52,6 +58,8 @@ def _scalar_cpp_type(type_obj):
         return "int32_t"
     if "i64" in type_repr or "index" in type_repr:
         return "int64_t"
+    if "e8m0" in type_repr or "e4m3" in type_repr or "e5m2" in type_repr:
+        return "uint8_t"
     if "f32" in type_repr:
         return "float"
     if "f16" in type_repr:
@@ -63,6 +71,8 @@ def _scalar_ctype(type_obj):
     type_repr = _type_repr(type_obj)
     if "i64" in type_repr or "index" in type_repr:
         return ctypes.c_int64
+    if "e8m0" in type_repr or "e4m3" in type_repr or "e5m2" in type_repr:
+        return ctypes.c_uint8
     if "f32" in type_repr:
         return ctypes.c_float
     if "f16" in type_repr:
