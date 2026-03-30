@@ -1,0 +1,11 @@
+module {
+  func.func @a5_micro_vector_copy(%arg0: !pto.ptr<f32, ub>, %arg1: !pto.ptr<f32, ub>, %arg2: index) {
+    pto.section.vector {
+      %0 = pto.vlds %arg0[%arg2] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
+      %1 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      pto.vsts %0, %arg1[%arg2], %1 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
+    }
+    return
+  }
+}
+

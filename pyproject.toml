@@ -19,6 +19,8 @@ packages = [
   "ptodsl",
   "ptodsl.api",
   "ptodsl.compiler",
+  "ptodsl.lib",
+  "ptodsl.lib.a5",
   "ptodsl.utils",
 ]
 
