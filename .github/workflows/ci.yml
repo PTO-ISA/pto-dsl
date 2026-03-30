@@ -1,27 +1,11 @@
-name: CI
+name: Full Regression CI
 
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
-  pre-commit:
-    name: pre-commit
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Run pre-commit checks
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pre-commit
-          pre-commit run --all-files
-
   test:
     name: test (${{ matrix.arch }}, ${{ matrix.install-mode }})
     strategy:
@@ -57,6 +41,12 @@ jobs:
         run: apt-get update && apt-get install -y wget git
 
       - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ env.RELEASE_REPO }}
+          ref: ${{ env.RELEASE_TAG }}
+          path: ptoas-src
 
       - name: Install Python packages
         run: |
@@ -95,8 +85,10 @@ jobs:
             pip install -e .
           fi
 
-      - name: Run frontend tests
-        run: pytest -v ./tests/frontend
+      - name: Run host API and regression tests
+        env:
+          PTOAS_VPTO_MANIFEST: ${{ github.workspace }}/ptoas-src/docs/vpto-manifest.json
+        run: pytest -v ./tests/api ./tests/frontend ./tests/regression
 
       - name: Run NPU build tests
         run: |

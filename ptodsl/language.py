@@ -6,6 +6,17 @@ from mlir import ir as mlir_ir
 from mlir.dialects import arith, pto, scf
 from mlir.ir import F16Type, F32Type, IndexType, InsertionPoint, IntegerType
 
+from ._constexpr import (
+    Constexpr,
+    const_expr,
+    range_constexpr,
+    require_static_int,
+    require_static_int_sequence,
+)
+from .api import micro as _micro_api
+from .api._micro_registry import MICRO_OPS
+from .api.scalar import LazyTypeAlias, resolve_type
+
 
 def _unwrap(value):
     if isinstance(value, Value):
@@ -105,15 +116,18 @@ class MXFP8DType:
 
 
 def _get_mlir_float_type(alias_name, *type_names):
-    for type_name in type_names:
-        type_ctor = getattr(mlir_ir, type_name, None)
-        if type_ctor is not None:
-            return type_ctor.get()
-    supported = ", ".join(type_names)
-    raise AttributeError(
-        f"module '{__name__}' has no attribute '{alias_name}' because the active MLIR "
-        f"Python bindings do not expose any of: {supported}"
-    )
+    def _resolve():
+        for type_name in type_names:
+            type_ctor = getattr(mlir_ir, type_name, None)
+            if type_ctor is not None:
+                return type_ctor.get()
+        supported = ", ".join(type_names)
+        raise AttributeError(
+            f"module '{__name__}' has no attribute '{alias_name}' because the active MLIR "
+            f"Python bindings do not expose any of: {supported}"
+        )
+
+    return LazyTypeAlias(alias_name, _resolve)
 
 
 def make_mxfp8(*, lhs="e5m2", rhs="e5m2", acc=None, scale_factor=32):
@@ -137,11 +151,11 @@ def make_mxfp8(*, lhs="e5m2", rhs="e5m2", acc=None, scale_factor=32):
 def __getattr__(name):
     # Keep aliases conservative and only expose types that map cleanly to MLIR/PTO.
     if name == "bool":
-        return IntegerType.get_signless(1)
+        return LazyTypeAlias(name, lambda: IntegerType.get_signless(1))
     if name == "float32":
-        return F32Type.get()
+        return LazyTypeAlias(name, lambda: F32Type.get())
     if name == "float16":
-        return F16Type.get()
+        return LazyTypeAlias(name, lambda: F16Type.get())
     if name == "bfloat16":
         return _get_mlir_float_type(name, "BF16Type")
     if name in ("fp8_e4m3", "float8_e4m3"):
@@ -157,22 +171,57 @@ def __getattr__(name):
     if name == "mxfp8_e5m2":
         return make_mxfp8(lhs="e5m2", rhs="e5m2")
     if name == "int32":
-        return IntegerType.get_signless(32)
+        return LazyTypeAlias(name, lambda: IntegerType.get_signless(32))
     if name == "int16":
-        return IntegerType.get_signless(16)
+        return LazyTypeAlias(name, lambda: IntegerType.get_signless(16))
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
-def PtrType(dtype):
-    return pto.PtrType.get(dtype)
+def _resolve_memory_space(memory_space):
+    if memory_space is None:
+        return None
+    if isinstance(memory_space, str):
+        return getattr(pto.AddressSpace, memory_space)
+    if hasattr(memory_space, "value") and not isinstance(memory_space, int):
+        return int(memory_space.value)
+    return memory_space
+
+
+def PtrType(dtype, memory_space=None):
+    resolved = resolve_type(dtype)
+    memory_space = _resolve_memory_space(memory_space)
+    if memory_space is None:
+        return pto.PtrType.get(resolved)
+    return pto.PtrType.get(resolved, memory_space)
+
+
+def VRegType(lanes, dtype):
+    return pto.VRegType.get(
+        require_static_int(lanes, context="VRegType.lanes"),
+        resolve_type(dtype),
+    )
+
+
+def MaskType():
+    return pto.MaskType.get()
+
+
+def AlignType():
+    return pto.AlignType.get()
 
 
 def TensorType(*, rank, dtype):
-    return pto.TensorViewType.get(rank, dtype)
+    return pto.TensorViewType.get(
+        require_static_int(rank, context="TensorType.rank"),
+        resolve_type(dtype),
+    )
 
 
 def SubTensorType(*, shape, dtype):
-    return pto.PartitionTensorViewType.get(shape, dtype)
+    return pto.PartitionTensorViewType.get(
+        require_static_int_sequence(shape, context="SubTensorType.shape"),
+        resolve_type(dtype),
+    )
 
 
 class TileBufConfig:
@@ -182,7 +231,9 @@ class TileBufConfig:
         self._bl = pto.BLayoutAttr.get(getattr(pto.BLayout, blayout))
         self._sl = pto.SLayoutAttr.get(getattr(pto.SLayout, slayout))
         self._pd = pto.PadValueAttr.get(getattr(pto.PadValue, pad))
-        self._s_fractal_size = s_fractal_size
+        self._s_fractal_size = require_static_int(
+            s_fractal_size, context="TileBufConfig.s_fractal_size"
+        )
 
     @property
     def attr(self):
@@ -212,13 +263,18 @@ def _default_tile_config(memory_space, shape):
 
 
 def TileBufType(*, shape, dtype, memory_space, valid_shape=None, config=None):
+    shape = require_static_int_sequence(shape, context="TileBufType.shape")
     space = pto.AddressSpaceAttr.get(getattr(pto.AddressSpace, memory_space))
     if valid_shape is None:
         valid_shape = shape
+    else:
+        valid_shape = require_static_int_sequence(
+            valid_shape, context="TileBufType.valid_shape"
+        )
     if config is None:
         config = _default_tile_config(memory_space, shape)
     cfg = config.attr if isinstance(config, TileBufConfig) else config
-    return pto.TileBufType.get(shape, dtype, space, valid_shape, cfg)
+    return pto.TileBufType.get(shape, resolve_type(dtype), space, valid_shape, cfg)
 
 
 def LeftScaleTileBufType(*, shape, dtype, valid_shape=None, config=None):
@@ -532,5 +588,13 @@ def barrier(sync_op):
     pto.barrier(_resolve_sync_op(sync_op))
 
 
+def barrier_sync(sync_op):
+    pto.barrier_sync(pto.SyncOpTypeAttr.get(_resolve_sync_op(sync_op)))
+
+
 def row_sum(src, tmp, dst):
     pto.TRowSumOp(src = src, tmp = tmp, dst = dst)
+
+
+for _name in MICRO_OPS:
+    globals()[_name] = getattr(_micro_api, _name)
