@@ -206,9 +206,7 @@ def _tcol_reduce(
             vector_type=vector_type,
             reduce_op=reduce_op,
         )
-    elif const_expr(
-        impl_kind in {VF_IMPL_1D_POST_UPDATE, VF_IMPL_2D_POST_UPDATE}
-    ):
+    elif const_expr(impl_kind in {VF_IMPL_1D_POST_UPDATE, VF_IMPL_2D_POST_UPDATE}):
         _tcol_reduce_post_update(
             src_ptr,
             out_ptr,

@@ -130,7 +130,9 @@ def tsort32(src_view, idx_view, out_view, *, dtype, shape, base_addr=0):
     out_addr = const_i64(base_addr + src_bytes + idx_bytes)
 
     src_tile = alloc_tile_buffer(dtype, [rows, cols], space="VEC", addr=src_addr)
-    idx_tile = alloc_tile_buffer(uint32_type(), [rows, cols], space="VEC", addr=idx_addr)
+    idx_tile = alloc_tile_buffer(
+        uint32_type(), [rows, cols], space="VEC", addr=idx_addr
+    )
     out_tile = alloc_tile_buffer(dtype, [rows, out_cols], space="VEC", addr=out_addr)
     load_view(src_view, src_tile)
     load_view(idx_view, idx_tile)

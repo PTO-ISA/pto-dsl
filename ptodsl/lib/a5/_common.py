@@ -494,7 +494,9 @@ def check_col_reduce_operands(src_view, out_view, *, dtype, shape, context):
     return rows, cols
 
 
-def check_gather_operands(src_view, indices_view, out_view, *, dtype, index_dtype, shape):
+def check_gather_operands(
+    src_view, indices_view, out_view, *, dtype, index_dtype, shape
+):
     rows, cols = require_static_matrix_shape(shape, context="TGATHER")
     require_supported_dtype(
         dtype,
@@ -527,7 +529,9 @@ def check_gather_operands(src_view, indices_view, out_view, *, dtype, index_dtyp
 def check_mrgsort_operands(src_view, out_view, *, dtype, shape, block_len):
     rows, cols = require_static_matrix_shape(shape, context="TMRGSORT")
     if rows != 1:
-        raise ValueError("TMRGSORT micro lowering currently requires a single input row.")
+        raise ValueError(
+            "TMRGSORT micro lowering currently requires a single input row."
+        )
     if cols != block_len * 4:
         raise ValueError(
             "TMRGSORT micro lowering currently requires shape[1] == block_len * 4."

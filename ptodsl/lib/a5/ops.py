@@ -49,7 +49,13 @@ from .native import (
     xor,
 )
 from .tbinary import tadd, tdiv, tmov, tmul, tor_, tsub
-from .texpand import tcol_expand, trow_expand, trow_expand_div, trow_expand_mul, trow_expand_sub
+from .texpand import (
+    tcol_expand,
+    trow_expand,
+    trow_expand_div,
+    trow_expand_mul,
+    trow_expand_sub,
+)
 from .treduce import (
     tcol_max,
     tcol_min,

@@ -221,7 +221,9 @@ def build_mxfp8_matmul(*, m=16, k=64, n=32, lhs_variant="e5m2", rhs_variant="e5m
                 bias_tile,
                 acc_tile,
             )
-            store_tile(acc_tile, slice_tensor(out, offsets=[0, 0], sizes=[m, n], dtype=mx.acc))
+            store_tile(
+                acc_tile, slice_tensor(out, offsets=[0, 0], sizes=[m, n], dtype=mx.acc)
+            )
 
     return a5_mxfp8_matmul
 
@@ -253,13 +255,17 @@ def build_cube_matmul(
 
         with dsl.cube_section():
             lhs_mat = load_tile(
-                slice_tensor(lhs, offsets=[0, 0], sizes=[m, k], dtype=lhs_element_dtype),
+                slice_tensor(
+                    lhs, offsets=[0, 0], sizes=[m, k], dtype=lhs_element_dtype
+                ),
                 dtype=lhs_element_dtype,
                 shape=[m, k],
                 space="MAT",
             )
             rhs_mat = load_tile(
-                slice_tensor(rhs, offsets=[0, 0], sizes=[k, n], dtype=rhs_element_dtype),
+                slice_tensor(
+                    rhs, offsets=[0, 0], sizes=[k, n], dtype=rhs_element_dtype
+                ),
                 dtype=rhs_element_dtype,
                 shape=[k, n],
                 space="MAT",
@@ -272,7 +278,9 @@ def build_cube_matmul(
             ops.matmul(lhs_tile, rhs_tile, acc_tile)
             store_tile(
                 acc_tile,
-                slice_tensor(out, offsets=[0, 0], sizes=[m, n], dtype=acc_element_dtype),
+                slice_tensor(
+                    out, offsets=[0, 0], sizes=[m, n], dtype=acc_element_dtype
+                ),
             )
 
     return a5_cube_matmul

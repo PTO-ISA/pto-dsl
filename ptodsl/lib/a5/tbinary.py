@@ -346,7 +346,17 @@ def _binary_2d_no_post_update(
 
 
 def _binary_2d_post_update(
-    lhs_ptr, rhs_ptr, out_ptr, *, ptr_type, dtype, rows, cols, lanes, vector_type, micro_op
+    lhs_ptr,
+    rhs_ptr,
+    out_ptr,
+    *,
+    ptr_type,
+    dtype,
+    rows,
+    cols,
+    lanes,
+    vector_type,
+    micro_op,
 ):
     lane_step = s.const(lanes)
     for row in range_constexpr(rows):

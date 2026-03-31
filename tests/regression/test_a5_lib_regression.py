@@ -102,7 +102,9 @@ def test_a5_tcol_expand_emits_broadcast_micro_ops():
         dst_view = _make_tensor(dst, shape=[32, 32], dtype=pto.float32)
         with pto.vector_section():
             a5.tcol_expand(
-                _slice_tensor(src_view, offsets=[0, 0], sizes=[1, 32], dtype=pto.float32),
+                _slice_tensor(
+                    src_view, offsets=[0, 0], sizes=[1, 32], dtype=pto.float32
+                ),
                 _slice_tensor(
                     dst_view,
                     offsets=[0, 0],
@@ -138,9 +140,13 @@ def test_a5_tgather_emits_indexed_gather_opcodes():
         dst_view = _make_tensor(dst, shape=[1, 64], dtype=pto.float32)
         with pto.vector_section():
             a5.tgather(
-                _slice_tensor(src_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32),
+                _slice_tensor(
+                    src_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32
+                ),
                 _slice_tensor(idx_view, offsets=[0, 0], sizes=[1, 64], dtype=uint32()),
-                _slice_tensor(dst_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32),
+                _slice_tensor(
+                    dst_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32
+                ),
                 dtype=pto.float32,
                 index_dtype=uint32(),
                 shape=[1, 64],
@@ -167,7 +173,9 @@ def test_a5_trow_expand_emits_broadcast_micro_ops():
         dst_view = _make_tensor(dst, shape=[32, 32], dtype=pto.float32)
         with pto.vector_section():
             a5.trow_expand(
-                _slice_tensor(src_view, offsets=[0, 0], sizes=[32, 1], dtype=pto.float32),
+                _slice_tensor(
+                    src_view, offsets=[0, 0], sizes=[32, 1], dtype=pto.float32
+                ),
                 _slice_tensor(
                     dst_view,
                     offsets=[0, 0],
@@ -202,9 +210,15 @@ def test_a5_trow_expand_mul_emits_broadcast_compute_micro_ops():
         dst_view = _make_tensor(dst, shape=[32, 32], dtype=pto.float32)
         with pto.vector_section():
             a5.trow_expand_mul(
-                _slice_tensor(base_view, offsets=[0, 0], sizes=[32, 32], dtype=pto.float32),
-                _slice_tensor(scale_view, offsets=[0, 0], sizes=[32, 1], dtype=pto.float32),
-                _slice_tensor(dst_view, offsets=[0, 0], sizes=[32, 32], dtype=pto.float32),
+                _slice_tensor(
+                    base_view, offsets=[0, 0], sizes=[32, 32], dtype=pto.float32
+                ),
+                _slice_tensor(
+                    scale_view, offsets=[0, 0], sizes=[32, 1], dtype=pto.float32
+                ),
+                _slice_tensor(
+                    dst_view, offsets=[0, 0], sizes=[32, 32], dtype=pto.float32
+                ),
                 dtype=pto.float32,
                 shape=[32, 32],
             )
@@ -232,8 +246,12 @@ def test_a5_trsqrt_emits_vsqrt_then_vrec():
         dst_view = _make_tensor(dst, shape=[1, 64], dtype=pto.float32)
         with pto.vector_section():
             a5.trsqrt(
-                _slice_tensor(src_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32),
-                _slice_tensor(dst_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32),
+                _slice_tensor(
+                    src_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32
+                ),
+                _slice_tensor(
+                    dst_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32
+                ),
                 dtype=pto.float32,
                 shape=[1, 64],
             )
@@ -271,8 +289,12 @@ def test_a5_trow_reduce_emits_reduction_micro_ops(
         dst_view = _make_tensor(dst, shape=[32, 1], dtype=pto.float32)
         with pto.vector_section():
             helper(
-                _slice_tensor(src_view, offsets=[0, 0], sizes=[32, 32], dtype=pto.float32),
-                _slice_tensor(dst_view, offsets=[0, 0], sizes=[32, 1], dtype=pto.float32),
+                _slice_tensor(
+                    src_view, offsets=[0, 0], sizes=[32, 32], dtype=pto.float32
+                ),
+                _slice_tensor(
+                    dst_view, offsets=[0, 0], sizes=[32, 1], dtype=pto.float32
+                ),
                 dtype=pto.float32,
                 shape=[32, 32],
             )
@@ -293,9 +315,7 @@ def test_a5_trow_reduce_emits_reduction_micro_ops(
         ("tcol_min", "pto.vmin", "pto.tcolmin", a5.VF_IMPL_1D_POST_UPDATE),
     ],
 )
-def test_a5_tcol_reduce_emits_template_lowering(
-    helper_name, reduce_op, tile_op, impl
-):
+def test_a5_tcol_reduce_emits_template_lowering(helper_name, reduce_op, tile_op, impl):
     def meta_data():
         return {
             "ptr_t": pto.PtrType(pto.float32),
@@ -309,8 +329,12 @@ def test_a5_tcol_reduce_emits_template_lowering(
         dst_view = _make_tensor(dst, shape=[1, 32], dtype=pto.float32)
         with pto.vector_section():
             helper(
-                _slice_tensor(src_view, offsets=[0, 0], sizes=[32, 32], dtype=pto.float32),
-                _slice_tensor(dst_view, offsets=[0, 0], sizes=[1, 32], dtype=pto.float32),
+                _slice_tensor(
+                    src_view, offsets=[0, 0], sizes=[32, 32], dtype=pto.float32
+                ),
+                _slice_tensor(
+                    dst_view, offsets=[0, 0], sizes=[1, 32], dtype=pto.float32
+                ),
                 dtype=pto.float32,
                 shape=[32, 32],
                 impl=impl,
@@ -342,9 +366,13 @@ def test_a5_tsort32_emits_vbitsort():
         dst_view = _make_tensor(dst, shape=[1, 128], dtype=pto.float32)
         with pto.vector_section():
             a5.tsort32(
-                _slice_tensor(src_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32),
+                _slice_tensor(
+                    src_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32
+                ),
                 _slice_tensor(idx_view, offsets=[0, 0], sizes=[1, 64], dtype=uint32()),
-                _slice_tensor(dst_view, offsets=[0, 0], sizes=[1, 128], dtype=pto.float32),
+                _slice_tensor(
+                    dst_view, offsets=[0, 0], sizes=[1, 128], dtype=pto.float32
+                ),
                 dtype=pto.float32,
                 shape=[1, 64],
             )
@@ -366,8 +394,12 @@ def test_a5_tmrgsort_emits_vmrgsort4():
         dst_view = _make_tensor(dst, shape=[1, 256], dtype=pto.float32)
         with pto.vector_section():
             a5.tmrgsort(
-                _slice_tensor(src_view, offsets=[0, 0], sizes=[1, 256], dtype=pto.float32),
-                _slice_tensor(dst_view, offsets=[0, 0], sizes=[1, 256], dtype=pto.float32),
+                _slice_tensor(
+                    src_view, offsets=[0, 0], sizes=[1, 256], dtype=pto.float32
+                ),
+                _slice_tensor(
+                    dst_view, offsets=[0, 0], sizes=[1, 256], dtype=pto.float32
+                ),
                 dtype=pto.float32,
                 shape=[1, 256],
                 block_len=64,
@@ -410,9 +442,15 @@ def test_a5_tadd_rejects_view_dtype_mismatch():
             out = _make_tensor(dst, shape=[32, 32], dtype=pto.float16)
             with pto.vector_section():
                 a5.tadd(
-                    _slice_tensor(lhs, offsets=[0, 0], sizes=[32, 32], dtype=pto.float16),
-                    _slice_tensor(rhs, offsets=[0, 0], sizes=[32, 32], dtype=pto.float16),
-                    _slice_tensor(out, offsets=[0, 0], sizes=[32, 32], dtype=pto.float16),
+                    _slice_tensor(
+                        lhs, offsets=[0, 0], sizes=[32, 32], dtype=pto.float16
+                    ),
+                    _slice_tensor(
+                        rhs, offsets=[0, 0], sizes=[32, 32], dtype=pto.float16
+                    ),
+                    _slice_tensor(
+                        out, offsets=[0, 0], sizes=[32, 32], dtype=pto.float16
+                    ),
                     dtype=pto.float32,
                     shape=[32, 32],
                 )
@@ -432,7 +470,9 @@ def test_a5_trow_expand_rejects_non_column_source():
             dst_view = _make_tensor(dst, shape=[32, 32], dtype=pto.float32)
             with pto.vector_section():
                 a5.trow_expand(
-                    _slice_tensor(src_view, offsets=[0, 0], sizes=[1, 32], dtype=pto.float32),
+                    _slice_tensor(
+                        src_view, offsets=[0, 0], sizes=[1, 32], dtype=pto.float32
+                    ),
                     _slice_tensor(
                         dst_view,
                         offsets=[0, 0],
@@ -456,8 +496,12 @@ def test_a5_trow_sum_rejects_non_single_column_output():
             dst_view = _make_tensor(dst, shape=[1, 32], dtype=pto.float32)
             with pto.vector_section():
                 a5.trow_sum(
-                    _slice_tensor(src_view, offsets=[0, 0], sizes=[32, 32], dtype=pto.float32),
-                    _slice_tensor(dst_view, offsets=[0, 0], sizes=[1, 32], dtype=pto.float32),
+                    _slice_tensor(
+                        src_view, offsets=[0, 0], sizes=[32, 32], dtype=pto.float32
+                    ),
+                    _slice_tensor(
+                        dst_view, offsets=[0, 0], sizes=[1, 32], dtype=pto.float32
+                    ),
                     dtype=pto.float32,
                     shape=[32, 32],
                 )
@@ -475,8 +519,12 @@ def test_a5_tcol_sum_rejects_unsupported_dtype():
             dst_view = _make_tensor(dst, shape=[1, 32], dtype=pto.bool)
             with pto.vector_section():
                 a5.tcol_sum(
-                    _slice_tensor(src_view, offsets=[0, 0], sizes=[32, 32], dtype=pto.bool),
-                    _slice_tensor(dst_view, offsets=[0, 0], sizes=[1, 32], dtype=pto.bool),
+                    _slice_tensor(
+                        src_view, offsets=[0, 0], sizes=[32, 32], dtype=pto.bool
+                    ),
+                    _slice_tensor(
+                        dst_view, offsets=[0, 0], sizes=[1, 32], dtype=pto.bool
+                    ),
                     dtype=pto.bool,
                     shape=[32, 32],
                 )
