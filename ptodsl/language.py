@@ -8,8 +8,15 @@ from mlir.ir import IndexType, InsertionPoint, IntegerType
 
 
 def _unwrap(value):
-    if isinstance(value, Value):
+    if isinstance(value, Value) or hasattr(value, "raw"):
         return value.raw
+    return value
+
+
+def _unwrap_index(value):
+    value = _unwrap(value)
+    if isinstance(value, int):
+        return arith.ConstantOp(IndexType.get(), value).result
     return value
 
 
@@ -83,6 +90,8 @@ class Value:
 def wrap_value(value):
     if isinstance(value, Value):
         return value
+    if hasattr(value, "raw"):
+        return Value(value.raw)
     return Value(value)
 
 
@@ -322,16 +331,16 @@ def index_cast(value, index_type=IndexType):
 
 
 def as_tensor(tensor_type, *, ptr, shape, strides):
-    shape_vals = [_unwrap(v) for v in shape]
-    stride_vals = [_unwrap(v) for v in strides]
+    shape_vals = [_unwrap_index(v) for v in shape]
+    stride_vals = [_unwrap_index(v) for v in strides]
     return pto.MakeTensorViewOp(
         tensor_type, _unwrap(ptr), shape_vals, stride_vals
     ).result
 
 
 def slice_view(subtensor_type, *, source, offsets, sizes):
-    offset_vals = [_unwrap(v) for v in offsets]
-    size_vals = [_unwrap(v) for v in sizes]
+    offset_vals = [_unwrap_index(v) for v in offsets]
+    size_vals = [_unwrap_index(v) for v in sizes]
     return pto.PartitionViewOp(
         subtensor_type, source, offsets=offset_vals, sizes=size_vals
     ).result
