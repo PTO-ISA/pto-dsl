@@ -33,6 +33,8 @@ Entry points:
 - [`kernels.py`](./kernels.py): translated example kernels, including the
   no-section `build_hivm_vadd_demo()` flow that lowers through PTOAS VPTO into
   `llvm.hivm.*` intrinsics
+- [`tile_op_kernels.py`](./tile_op_kernels.py): one builder per public tile op
+  that already has a micro-backed implementation
 - [`generated`](./generated): emitted `.pto` artifacts from `scripts/generate_a5_pto.py`
 
 Recommended usage:
@@ -54,6 +56,14 @@ To also emit HIVM LLVM for the pure micro kernels:
 ```bash
 PYTHONPATH=/Users/zhoubot/github/.llvm-19.1.7/build-mlir-py312/tools/mlir/python_packages/mlir_core:/Users/zhoubot/github/pto-org/PTOAS/install-src312:/Users/zhoubot/github/pto-org/PTOAS/build-src312/python \
 /Users/zhoubot/github/.venv-ptoas-src312/bin/python scripts/generate_a5_pto.py --emit-hivm-llvm
+```
+
+To emit one `.pto` file per public tile op that already has a micro-backed
+implementation:
+
+```bash
+PYTHONPATH=/Users/zhoubot/github/.llvm-19.1.7/build-mlir-py312/tools/mlir/python_packages/mlir_core:/Users/zhoubot/github/pto-org/PTOAS/install-src312:/Users/zhoubot/github/pto-org/PTOAS/build-src312/python \
+/Users/zhoubot/github/.venv-ptoas-src312/bin/python scripts/generate_tile_op_pto.py
 ```
 
 `--emit-cpp` and `--emit-hivm-llvm` are intentionally asymmetric:

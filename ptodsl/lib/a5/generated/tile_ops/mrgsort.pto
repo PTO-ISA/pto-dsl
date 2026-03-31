@@ -1,0 +1,44 @@
+module {
+  func.func @tile_op_mrgsort(%arg0: !pto.ptr<f32, gm>, %arg1: !pto.ptr<f32, gm>) {
+    %c64 = arith.constant 64 : index
+    %c1 = arith.constant 1 : index
+    %c1_0 = arith.constant 1 : index
+    %c64_1 = arith.constant 64 : index
+    %0 = pto.make_tensor_view %arg0, shape = [%c1_0, %c64_1], strides = [%c64, %c1] : !pto.tensor_view<?x?xf32>
+    %c64_2 = arith.constant 64 : index
+    %c1_3 = arith.constant 1 : index
+    %c1_4 = arith.constant 1 : index
+    %c64_5 = arith.constant 64 : index
+    %1 = pto.make_tensor_view %arg1, shape = [%c1_4, %c64_5], strides = [%c64_2, %c1_3] : !pto.tensor_view<?x?xf32>
+    pto.section.vector {
+      %c0 = arith.constant 0 : index
+      %c0_6 = arith.constant 0 : index
+      %c1_7 = arith.constant 1 : index
+      %c64_8 = arith.constant 64 : index
+      %2 = pto.partition_view %0, offsets = [%c0, %c0_6], sizes = [%c1_7, %c64_8] : !pto.tensor_view<?x?xf32> -> !pto.partition_tensor_view<1x64xf32>
+      %c0_9 = arith.constant 0 : index
+      %c0_10 = arith.constant 0 : index
+      %c1_11 = arith.constant 1 : index
+      %c64_12 = arith.constant 64 : index
+      %3 = pto.partition_view %1, offsets = [%c0_9, %c0_10], sizes = [%c1_11, %c64_12] : !pto.tensor_view<?x?xf32> -> !pto.partition_tensor_view<1x64xf32>
+      %c0_i64 = arith.constant 0 : i64
+      %c256_i64 = arith.constant 256 : i64
+      %4 = pto.alloc_tile addr = %c0_i64 : !pto.tile_buf<vec, 1x64xf32>
+      %5 = pto.alloc_tile addr = %c256_i64 : !pto.tile_buf<vec, 1x64xf32>
+      pto.tload ins(%2 : !pto.partition_tensor_view<1x64xf32>) outs(%4 : !pto.tile_buf<vec, 1x64xf32>)
+      %6 = pto.castptr %c0_i64 : i64 -> !pto.ptr<f32, ub>
+      %7 = pto.castptr %c256_i64 : i64 -> !pto.ptr<f32, ub>
+      %c16 = arith.constant 16 : index
+      %8 = pto.addptr %6, %c16 : <f32, ub> -> <f32, ub>
+      %c32 = arith.constant 32 : index
+      %9 = pto.addptr %6, %c32 : <f32, ub> -> <f32, ub>
+      %c48 = arith.constant 48 : index
+      %10 = pto.addptr %6, %c48 : <f32, ub> -> <f32, ub>
+      %c2251834173947912_i64 = arith.constant 2251834173947912 : i64
+      %c3841_i64 = arith.constant 3841 : i64
+      pto.vmrgsort4 %7, %6, %8, %9, %10, %c2251834173947912_i64, %c3841_i64 : !pto.ptr<f32, ub>, !pto.ptr<f32, ub>, !pto.ptr<f32, ub>, !pto.ptr<f32, ub>, !pto.ptr<f32, ub>, i64, i64
+      pto.tstore ins(%5 : !pto.tile_buf<vec, 1x64xf32>) outs(%3 : !pto.partition_tensor_view<1x64xf32>)
+    }
+    return
+  }
+}

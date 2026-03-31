@@ -10,6 +10,11 @@ from .kernels import (
     build_templated_elementwise_add,
     build_vector_copy,
 )
+from .tile_op_kernels import (
+    TILE_OP_KERNEL_BUILDERS,
+    TILE_OP_KERNEL_SPECS,
+    tile_op_generation_index_markdown,
+)
 from .ops import *
 from .tile_micro_coverage import (
     TILE_MICRO_COVERAGE,
@@ -21,6 +26,8 @@ __all__ = list(ops.__all__) + [
     "A5_HEADER_COVERAGE",
     "HIVM_LLVM_KERNELS",
     "KERNEL_BUILDERS",
+    "TILE_OP_KERNEL_BUILDERS",
+    "TILE_OP_KERNEL_SPECS",
     "TILE_MICRO_COVERAGE",
     "a5_header_coverage_markdown",
     "build_cube_matmul",
@@ -37,5 +44,6 @@ __all__ = list(ops.__all__) + [
     "treduce",
     "tscalar",
     "tsort",
+    "tile_op_generation_index_markdown",
     "tunary",
 ]

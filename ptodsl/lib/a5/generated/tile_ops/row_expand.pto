@@ -1,0 +1,91 @@
+module {
+  func.func @tile_op_row_expand(%arg0: !pto.ptr<f32, gm>, %arg1: !pto.ptr<f32, gm>) {
+    %c1 = arith.constant 1 : index
+    %c1_0 = arith.constant 1 : index
+    %c8 = arith.constant 8 : index
+    %c1_1 = arith.constant 1 : index
+    %0 = pto.make_tensor_view %arg0, shape = [%c8, %c1_1], strides = [%c1, %c1_0] : !pto.tensor_view<?x?xf32>
+    %c64 = arith.constant 64 : index
+    %c1_2 = arith.constant 1 : index
+    %c8_3 = arith.constant 8 : index
+    %c64_4 = arith.constant 64 : index
+    %1 = pto.make_tensor_view %arg1, shape = [%c8_3, %c64_4], strides = [%c64, %c1_2] : !pto.tensor_view<?x?xf32>
+    pto.section.vector {
+      %c0 = arith.constant 0 : index
+      %c0_5 = arith.constant 0 : index
+      %c8_6 = arith.constant 8 : index
+      %c1_7 = arith.constant 1 : index
+      %2 = pto.partition_view %0, offsets = [%c0, %c0_5], sizes = [%c8_6, %c1_7] : !pto.tensor_view<?x?xf32> -> !pto.partition_tensor_view<8x1xf32>
+      %c0_8 = arith.constant 0 : index
+      %c0_9 = arith.constant 0 : index
+      %c8_10 = arith.constant 8 : index
+      %c64_11 = arith.constant 64 : index
+      %3 = pto.partition_view %1, offsets = [%c0_8, %c0_9], sizes = [%c8_10, %c64_11] : !pto.tensor_view<?x?xf32> -> !pto.partition_tensor_view<8x64xf32>
+      %c0_i64 = arith.constant 0 : i64
+      %c2048_i64 = arith.constant 2048 : i64
+      %4 = pto.alloc_tile addr = %c0_i64 : !pto.tile_buf<vec, 8x64xf32, valid=8x1>
+      %5 = pto.alloc_tile addr = %c2048_i64 : !pto.tile_buf<vec, 8x64xf32>
+      pto.tload ins(%2 : !pto.partition_tensor_view<8x1xf32>) outs(%4 : !pto.tile_buf<vec, 8x64xf32, valid=8x1>)
+      %6 = pto.castptr %c0_i64 : i64 -> !pto.ptr<f32, ub>
+      %7 = pto.castptr %c2048_i64 : i64 -> !pto.ptr<f32, ub>
+      %c0_12 = arith.constant 0 : index
+      %8 = pto.vldas %6[%c0_12] : !pto.ptr<f32, ub> -> !pto.align
+      %result, %updated_align, %updated_source = pto.vldus %6[%c0_12], %8 : !pto.ptr<f32, ub>, !pto.align -> !pto.vreg<64xf32>, !pto.align, !pto.ptr<f32, ub>
+      %9 = pto.vdup %result {position = "POS_LOWEST"} : !pto.vreg<64xf32> -> !pto.vreg<64xf32>
+      %10 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %c0_13 = arith.constant 0 : index
+      pto.vsts %9, %7[%c0_13], %10 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
+      %c64_14 = arith.constant 64 : index
+      %11 = pto.vldas %6[%c64_14] : !pto.ptr<f32, ub> -> !pto.align
+      %result_15, %updated_align_16, %updated_source_17 = pto.vldus %6[%c64_14], %11 : !pto.ptr<f32, ub>, !pto.align -> !pto.vreg<64xf32>, !pto.align, !pto.ptr<f32, ub>
+      %12 = pto.vdup %result_15 {position = "POS_LOWEST"} : !pto.vreg<64xf32> -> !pto.vreg<64xf32>
+      %13 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %c64_18 = arith.constant 64 : index
+      pto.vsts %12, %7[%c64_18], %13 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
+      %c128 = arith.constant 128 : index
+      %14 = pto.vldas %6[%c128] : !pto.ptr<f32, ub> -> !pto.align
+      %result_19, %updated_align_20, %updated_source_21 = pto.vldus %6[%c128], %14 : !pto.ptr<f32, ub>, !pto.align -> !pto.vreg<64xf32>, !pto.align, !pto.ptr<f32, ub>
+      %15 = pto.vdup %result_19 {position = "POS_LOWEST"} : !pto.vreg<64xf32> -> !pto.vreg<64xf32>
+      %16 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %c128_22 = arith.constant 128 : index
+      pto.vsts %15, %7[%c128_22], %16 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
+      %c192 = arith.constant 192 : index
+      %17 = pto.vldas %6[%c192] : !pto.ptr<f32, ub> -> !pto.align
+      %result_23, %updated_align_24, %updated_source_25 = pto.vldus %6[%c192], %17 : !pto.ptr<f32, ub>, !pto.align -> !pto.vreg<64xf32>, !pto.align, !pto.ptr<f32, ub>
+      %18 = pto.vdup %result_23 {position = "POS_LOWEST"} : !pto.vreg<64xf32> -> !pto.vreg<64xf32>
+      %19 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %c192_26 = arith.constant 192 : index
+      pto.vsts %18, %7[%c192_26], %19 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
+      %c256 = arith.constant 256 : index
+      %20 = pto.vldas %6[%c256] : !pto.ptr<f32, ub> -> !pto.align
+      %result_27, %updated_align_28, %updated_source_29 = pto.vldus %6[%c256], %20 : !pto.ptr<f32, ub>, !pto.align -> !pto.vreg<64xf32>, !pto.align, !pto.ptr<f32, ub>
+      %21 = pto.vdup %result_27 {position = "POS_LOWEST"} : !pto.vreg<64xf32> -> !pto.vreg<64xf32>
+      %22 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %c256_30 = arith.constant 256 : index
+      pto.vsts %21, %7[%c256_30], %22 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
+      %c320 = arith.constant 320 : index
+      %23 = pto.vldas %6[%c320] : !pto.ptr<f32, ub> -> !pto.align
+      %result_31, %updated_align_32, %updated_source_33 = pto.vldus %6[%c320], %23 : !pto.ptr<f32, ub>, !pto.align -> !pto.vreg<64xf32>, !pto.align, !pto.ptr<f32, ub>
+      %24 = pto.vdup %result_31 {position = "POS_LOWEST"} : !pto.vreg<64xf32> -> !pto.vreg<64xf32>
+      %25 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %c320_34 = arith.constant 320 : index
+      pto.vsts %24, %7[%c320_34], %25 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
+      %c384 = arith.constant 384 : index
+      %26 = pto.vldas %6[%c384] : !pto.ptr<f32, ub> -> !pto.align
+      %result_35, %updated_align_36, %updated_source_37 = pto.vldus %6[%c384], %26 : !pto.ptr<f32, ub>, !pto.align -> !pto.vreg<64xf32>, !pto.align, !pto.ptr<f32, ub>
+      %27 = pto.vdup %result_35 {position = "POS_LOWEST"} : !pto.vreg<64xf32> -> !pto.vreg<64xf32>
+      %28 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %c384_38 = arith.constant 384 : index
+      pto.vsts %27, %7[%c384_38], %28 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
+      %c448 = arith.constant 448 : index
+      %29 = pto.vldas %6[%c448] : !pto.ptr<f32, ub> -> !pto.align
+      %result_39, %updated_align_40, %updated_source_41 = pto.vldus %6[%c448], %29 : !pto.ptr<f32, ub>, !pto.align -> !pto.vreg<64xf32>, !pto.align, !pto.ptr<f32, ub>
+      %30 = pto.vdup %result_39 {position = "POS_LOWEST"} : !pto.vreg<64xf32> -> !pto.vreg<64xf32>
+      %31 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %c448_42 = arith.constant 448 : index
+      pto.vsts %30, %7[%c448_42], %31 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
+      pto.tstore ins(%5 : !pto.tile_buf<vec, 8x64xf32>) outs(%3 : !pto.partition_tensor_view<8x64xf32>)
+    }
+    return
+  }
+}
