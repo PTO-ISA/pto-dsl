@@ -1,7 +1,6 @@
 from ptodsl import to_ir_module
 import ptodsl.language as pto
 
-
 M, K, N = 16, 64, 32
 
 
@@ -52,13 +51,21 @@ def matmul_mxfp8_core(
 
     tv_a = pto.as_tensor(a_tensor, ptr=a, shape=[cM, cK], strides=[cK, c1])
     tv_b = pto.as_tensor(b_tensor, ptr=b, shape=[cK, cN], strides=[cN, c1])
-    tv_scale_a = pto.as_tensor(scale_a_tensor, ptr=scale_a, shape=[cM, cScaleK], strides=[cScaleK, c1])
-    tv_scale_b = pto.as_tensor(scale_b_tensor, ptr=scale_b, shape=[cScaleK, cN], strides=[cN, c1])
+    tv_scale_a = pto.as_tensor(
+        scale_a_tensor, ptr=scale_a, shape=[cM, cScaleK], strides=[cScaleK, c1]
+    )
+    tv_scale_b = pto.as_tensor(
+        scale_b_tensor, ptr=scale_b, shape=[cScaleK, cN], strides=[cN, c1]
+    )
 
     sv_a = pto.slice_view(a_view, source=tv_a, offsets=[c0, c0], sizes=[cM, cK])
     sv_b = pto.slice_view(b_view, source=tv_b, offsets=[c0, c0], sizes=[cK, cN])
-    sv_scale_a = pto.slice_view(scale_a_view, source=tv_scale_a, offsets=[c0, c0], sizes=[cM, cScaleK])
-    sv_scale_b = pto.slice_view(scale_b_view, source=tv_scale_b, offsets=[c0, c0], sizes=[cScaleK, cN])
+    sv_scale_a = pto.slice_view(
+        scale_a_view, source=tv_scale_a, offsets=[c0, c0], sizes=[cM, cScaleK]
+    )
+    sv_scale_b = pto.slice_view(
+        scale_b_view, source=tv_scale_b, offsets=[c0, c0], sizes=[cScaleK, cN]
+    )
 
     with pto.cube_section():
         ta = pto.alloc_tile(a_tile)

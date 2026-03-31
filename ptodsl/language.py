@@ -4,7 +4,7 @@ from typing import Sequence
 
 from mlir import ir as mlir_ir
 from mlir.dialects import arith, pto, scf
-from mlir.ir import F16Type, F32Type, IndexType, InsertionPoint, IntegerType
+from mlir.ir import IndexType, InsertionPoint, IntegerType
 
 
 def _unwrap(value):
@@ -69,7 +69,7 @@ class Value:
 
     def __ge__(self, other):
         return Value._cmp(self, other, arith.CmpIPredicate.sge)
-    
+
     def __eq__(self, other):
         return Value._cmp(self, other, arith.CmpIPredicate.eq)
 
@@ -100,7 +100,9 @@ class MXFP8DType:
 
     def scale_k(self, k):
         if k % self.scale_factor != 0:
-            raise ValueError(f"k={k} must be divisible by scale_factor={self.scale_factor} for MXFP8.")
+            raise ValueError(
+                f"k={k} must be divisible by scale_factor={self.scale_factor} for MXFP8."
+            )
         return k // self.scale_factor
 
 
@@ -122,9 +124,13 @@ def make_mxfp8(*, lhs="e5m2", rhs="e5m2", acc=None, scale_factor=32):
         "e5m2": __getattr__("fp8_e5m2"),
     }
     if lhs not in variants:
-        raise ValueError(f"Unsupported lhs variant '{lhs}'. Expected one of: {', '.join(sorted(variants))}.")
+        raise ValueError(
+            f"Unsupported lhs variant '{lhs}'. Expected one of: {', '.join(sorted(variants))}."
+        )
     if rhs not in variants:
-        raise ValueError(f"Unsupported rhs variant '{rhs}'. Expected one of: {', '.join(sorted(variants))}.")
+        raise ValueError(
+            f"Unsupported rhs variant '{rhs}'. Expected one of: {', '.join(sorted(variants))}."
+        )
     return MXFP8DType(
         lhs=variants[lhs],
         rhs=variants[rhs],
@@ -139,9 +145,9 @@ def __getattr__(name):
     if name == "bool":
         return IntegerType.get_signless(1)
     if name == "float32":
-        return F32Type.get()
+        return _get_mlir_float_type(name, "F32Type", "Float32Type")
     if name == "float16":
-        return F16Type.get()
+        return _get_mlir_float_type(name, "F16Type", "Float16Type")
     if name == "bfloat16":
         return _get_mlir_float_type(name, "BF16Type")
     if name in ("fp8_e4m3", "float8_e4m3"):
@@ -176,7 +182,9 @@ def SubTensorType(*, shape, dtype):
 
 
 class TileBufConfig:
-    def __init__(self, blayout="RowMajor", slayout="NoneBox", s_fractal_size=512, pad="Null"):
+    def __init__(
+        self, blayout="RowMajor", slayout="NoneBox", s_fractal_size=512, pad="Null"
+    ):
         # TODO: expose and validate a broader set of tile buffer knobs if PTO adds
         # more layout/padding/fractal settings that should be configurable here.
         self._bl = pto.BLayoutAttr.get(getattr(pto.BLayout, blayout))
@@ -186,7 +194,9 @@ class TileBufConfig:
 
     @property
     def attr(self):
-        return pto.TileBufConfigAttr.get(self._bl, self._sl, self._s_fractal_size, self._pd)
+        return pto.TileBufConfigAttr.get(
+            self._bl, self._sl, self._s_fractal_size, self._pd
+        )
 
 
 def _default_tile_config(memory_space, shape):
@@ -194,21 +204,51 @@ def _default_tile_config(memory_space, shape):
     # Defaults mirror the explicit configs used by the verbose matmul builder.
     if space == "MAT":
         if len(shape) >= 1 and shape[0] == 1:
-            return TileBufConfig(blayout="RowMajor", slayout="NoneBox", s_fractal_size=pto.TileConfig.fractalABSize)
-        return TileBufConfig(blayout="ColMajor", slayout="RowMajor", s_fractal_size=pto.TileConfig.fractalABSize)
+            return TileBufConfig(
+                blayout="RowMajor",
+                slayout="NoneBox",
+                s_fractal_size=pto.TileConfig.fractalABSize,
+            )
+        return TileBufConfig(
+            blayout="ColMajor",
+            slayout="RowMajor",
+            s_fractal_size=pto.TileConfig.fractalABSize,
+        )
     if space == "LEFT":
-        return TileBufConfig(blayout="RowMajor", slayout="RowMajor", s_fractal_size=pto.TileConfig.fractalABSize)
+        return TileBufConfig(
+            blayout="RowMajor",
+            slayout="RowMajor",
+            s_fractal_size=pto.TileConfig.fractalABSize,
+        )
     if space == "RIGHT":
-        return TileBufConfig(blayout="RowMajor", slayout="ColMajor", s_fractal_size=pto.TileConfig.fractalABSize)
+        return TileBufConfig(
+            blayout="RowMajor",
+            slayout="ColMajor",
+            s_fractal_size=pto.TileConfig.fractalABSize,
+        )
     if space == "ACC":
-        return TileBufConfig(blayout="ColMajor", slayout="RowMajor", s_fractal_size=pto.TileConfig.fractalCSize)
+        return TileBufConfig(
+            blayout="ColMajor",
+            slayout="RowMajor",
+            s_fractal_size=pto.TileConfig.fractalCSize,
+        )
     if space == "BIAS":
-        return TileBufConfig(blayout="RowMajor", slayout="NoneBox", s_fractal_size=pto.TileConfig.fractalABSize)
+        return TileBufConfig(
+            blayout="RowMajor",
+            slayout="NoneBox",
+            s_fractal_size=pto.TileConfig.fractalABSize,
+        )
     if space == "SCALING":
-        return TileBufConfig(blayout="RowMajor", slayout="NoneBox", s_fractal_size=pto.TileConfig.fractalABSize)
+        return TileBufConfig(
+            blayout="RowMajor",
+            slayout="NoneBox",
+            s_fractal_size=pto.TileConfig.fractalABSize,
+        )
     if space == "VEC":
         return TileBufConfig()
-    raise ValueError(f"Unsupported memory_space '{memory_space}' for default tile config.")
+    raise ValueError(
+        f"Unsupported memory_space '{memory_space}' for default tile config."
+    )
 
 
 def TileBufType(*, shape, dtype, memory_space, valid_shape=None, config=None):
@@ -228,7 +268,13 @@ def LeftScaleTileBufType(*, shape, dtype, valid_shape=None, config=None):
             slayout="RowMajor",
             s_fractal_size=pto.TileConfig.fractalMxSize,
         )
-    return TileBufType(shape=shape, dtype=dtype, memory_space="SCALING", valid_shape=valid_shape, config=config)
+    return TileBufType(
+        shape=shape,
+        dtype=dtype,
+        memory_space="SCALING",
+        valid_shape=valid_shape,
+        config=config,
+    )
 
 
 def RightScaleTileBufType(*, shape, dtype, valid_shape=None, config=None):
@@ -238,7 +284,13 @@ def RightScaleTileBufType(*, shape, dtype, valid_shape=None, config=None):
             slayout="ColMajor",
             s_fractal_size=pto.TileConfig.fractalMxSize,
         )
-    return TileBufType(shape=shape, dtype=dtype, memory_space="SCALING", valid_shape=valid_shape, config=config)
+    return TileBufType(
+        shape=shape,
+        dtype=dtype,
+        memory_space="SCALING",
+        valid_shape=valid_shape,
+        config=config,
+    )
 
 
 def const(value):
@@ -272,13 +324,17 @@ def index_cast(value, index_type=IndexType):
 def as_tensor(tensor_type, *, ptr, shape, strides):
     shape_vals = [_unwrap(v) for v in shape]
     stride_vals = [_unwrap(v) for v in strides]
-    return pto.MakeTensorViewOp(tensor_type, _unwrap(ptr), shape_vals, stride_vals).result
+    return pto.MakeTensorViewOp(
+        tensor_type, _unwrap(ptr), shape_vals, stride_vals
+    ).result
 
 
 def slice_view(subtensor_type, *, source, offsets, sizes):
     offset_vals = [_unwrap(v) for v in offsets]
     size_vals = [_unwrap(v) for v in sizes]
-    return pto.PartitionViewOp(subtensor_type, source, offsets=offset_vals, sizes=size_vals).result
+    return pto.PartitionViewOp(
+        subtensor_type, source, offsets=offset_vals, sizes=size_vals
+    ).result
 
 
 @contextmanager
@@ -447,17 +503,21 @@ def ge(a, b):
 
 
 def select(cond, true_val, false_val):
-    return Value(arith.SelectOp(_unwrap(cond), _unwrap(true_val), _unwrap(false_val)).result)
+    return Value(
+        arith.SelectOp(_unwrap(cond), _unwrap(true_val), _unwrap(false_val)).result
+    )
 
 
 class _IfElseBranch:
     def __init__(self, if_op):
         self._if_op = if_op
+
     @contextmanager
     def else_context(self):
         with InsertionPoint(self._if_op.else_block):
             yield
             scf.YieldOp([])
+
 
 @contextmanager
 def if_context(condition, has_else=False):
@@ -483,6 +543,7 @@ def cond(condition, then_builder, else_builder):
         scf.YieldOp([])
     return op
 
+
 def _resolve_sync_op(sync_op):
     if isinstance(sync_op, str):
         normalized = sync_op.strip().upper()
@@ -503,24 +564,39 @@ def _resolve_event_id(event_id):
     return event_id
 
 
-def record_event(record_op, wait_op, event_id: int|Sequence[int]=0):
+def record_event(record_op, wait_op, event_id: int | Sequence[int] = 0):
     if not isinstance(event_id, int):
         for eid in event_id:
-            pto.record_event(_resolve_sync_op(record_op), _resolve_sync_op(wait_op), _resolve_event_id(eid))
+            pto.record_event(
+                _resolve_sync_op(record_op),
+                _resolve_sync_op(wait_op),
+                _resolve_event_id(eid),
+            )
     else:
-        pto.record_event(_resolve_sync_op(record_op), _resolve_sync_op(wait_op), _resolve_event_id(event_id))
+        pto.record_event(
+            _resolve_sync_op(record_op),
+            _resolve_sync_op(wait_op),
+            _resolve_event_id(event_id),
+        )
 
 
-
-def wait_event(record_op, wait_op, event_id: int|Sequence[int]=0):
+def wait_event(record_op, wait_op, event_id: int | Sequence[int] = 0):
     if not isinstance(event_id, int):
         for eid in event_id:
-            pto.wait_event(_resolve_sync_op(record_op), _resolve_sync_op(wait_op), _resolve_event_id(eid))
+            pto.wait_event(
+                _resolve_sync_op(record_op),
+                _resolve_sync_op(wait_op),
+                _resolve_event_id(eid),
+            )
     else:
-        pto.wait_event(_resolve_sync_op(record_op), _resolve_sync_op(wait_op), _resolve_event_id(event_id))
+        pto.wait_event(
+            _resolve_sync_op(record_op),
+            _resolve_sync_op(wait_op),
+            _resolve_event_id(event_id),
+        )
 
 
-def record_wait_pair(record_op, wait_op, event_id: int|Sequence[int]=0):
+def record_wait_pair(record_op, wait_op, event_id: int | Sequence[int] = 0):
     rec = _resolve_sync_op(record_op)
     w = _resolve_sync_op(wait_op)
     ev = _resolve_event_id(event_id)
@@ -533,4 +609,4 @@ def barrier(sync_op):
 
 
 def row_sum(src, tmp, dst):
-    pto.TRowSumOp(src = src, tmp = tmp, dst = dst)
+    pto.TRowSumOp(src=src, tmp=tmp, dst=dst)

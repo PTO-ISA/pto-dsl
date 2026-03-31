@@ -10,7 +10,6 @@ from ... import scalar as _scalar
 from ... import const_expr, range_constexpr
 from ...api.scalar import _unwrap
 
-
 VF_IMPL_DEFAULT = "default"
 VF_IMPL_1D_NO_POST_UPDATE = "1d_no_post_update"
 VF_IMPL_1D_POST_UPDATE = "1d_post_update"
@@ -70,9 +69,24 @@ def _dtype_token(dtype):
 
 def _dtype_byte_width(dtype):
     text = str(dtype)
-    if "float32" in text or "f32" in text or "int32" in text or "i32" in text or "uint32" in text or "u32" in text:
+    if (
+        "float32" in text
+        or "f32" in text
+        or "int32" in text
+        or "i32" in text
+        or "uint32" in text
+        or "u32" in text
+    ):
         return 4
-    if "float16" in text or "f16" in text or "bfloat16" in text or "bf16" in text or "int16" in text or "i16" in text or "u16" in text:
+    if (
+        "float16" in text
+        or "f16" in text
+        or "bfloat16" in text
+        or "bf16" in text
+        or "int16" in text
+        or "i16" in text
+        or "u16" in text
+    ):
         return 2
     if "i8" in text or "u8" in text:
         return 1
@@ -215,7 +229,9 @@ def _normalize_vf_impl_kind(impl):
     }
     if normalized not in aliases:
         supported = ", ".join(sorted(aliases))
-        raise ValueError(f"Unsupported VF impl kind '{impl}'. Expected one of: {supported}.")
+        raise ValueError(
+            f"Unsupported VF impl kind '{impl}'. Expected one of: {supported}."
+        )
     return aliases[normalized]
 
 
@@ -584,7 +600,9 @@ def row_expand_micro(src_view, out_view, *, dtype, shape, base_addr=0):
     return out_view
 
 
-def row_expand_sub_micro(base_view, expand_view, out_view, *, dtype, shape, base_addr=0):
+def row_expand_sub_micro(
+    base_view, expand_view, out_view, *, dtype, shape, base_addr=0
+):
     return _row_expand_binary_micro(
         base_view,
         expand_view,
@@ -596,7 +614,9 @@ def row_expand_sub_micro(base_view, expand_view, out_view, *, dtype, shape, base
     )
 
 
-def row_expand_mul_micro(base_view, expand_view, out_view, *, dtype, shape, base_addr=0):
+def row_expand_mul_micro(
+    base_view, expand_view, out_view, *, dtype, shape, base_addr=0
+):
     return _row_expand_binary_micro(
         base_view,
         expand_view,
@@ -608,7 +628,9 @@ def row_expand_mul_micro(base_view, expand_view, out_view, *, dtype, shape, base
     )
 
 
-def row_expand_div_micro(base_view, expand_view, out_view, *, dtype, shape, base_addr=0):
+def row_expand_div_micro(
+    base_view, expand_view, out_view, *, dtype, shape, base_addr=0
+):
     return _row_expand_binary_micro(
         base_view,
         expand_view,
@@ -659,7 +681,9 @@ def row_min_micro(src_view, out_view, *, dtype, shape, base_addr=0):
     )
 
 
-def col_sum_micro(src_view, out_view, *, dtype, shape, base_addr=0, impl=VF_IMPL_DEFAULT):
+def col_sum_micro(
+    src_view, out_view, *, dtype, shape, base_addr=0, impl=VF_IMPL_DEFAULT
+):
     return _col_reduce_micro(
         src_view,
         out_view,
@@ -671,7 +695,9 @@ def col_sum_micro(src_view, out_view, *, dtype, shape, base_addr=0, impl=VF_IMPL
     )
 
 
-def col_max_micro(src_view, out_view, *, dtype, shape, base_addr=0, impl=VF_IMPL_DEFAULT):
+def col_max_micro(
+    src_view, out_view, *, dtype, shape, base_addr=0, impl=VF_IMPL_DEFAULT
+):
     return _col_reduce_micro(
         src_view,
         out_view,
@@ -683,7 +709,9 @@ def col_max_micro(src_view, out_view, *, dtype, shape, base_addr=0, impl=VF_IMPL
     )
 
 
-def col_min_micro(src_view, out_view, *, dtype, shape, base_addr=0, impl=VF_IMPL_DEFAULT):
+def col_min_micro(
+    src_view, out_view, *, dtype, shape, base_addr=0, impl=VF_IMPL_DEFAULT
+):
     return _col_reduce_micro(
         src_view,
         out_view,
@@ -879,7 +907,9 @@ def _check_col_reduce_operands(src_view, out_view, *, dtype, shape, context):
     return rows, cols
 
 
-def _check_gather_operands(src_view, indices_view, out_view, *, dtype, index_dtype, shape):
+def _check_gather_operands(
+    src_view, indices_view, out_view, *, dtype, index_dtype, shape
+):
     rows, cols = _require_static_matrix_shape(shape, context="TGATHER")
     dtype_token = _require_supported_dtype(
         dtype,
@@ -995,13 +1025,21 @@ def _check_sort32_operands(src_view, idx_view, out_view, *, dtype, shape):
         message="Idx must be uint32_t.",
     )
     if cols % 32 != 0:
-        raise ValueError("TSORT32 micro lowering currently requires column count divisible by 32.")
+        raise ValueError(
+            "TSORT32 micro lowering currently requires column count divisible by 32."
+        )
     return rows, cols, out_cols
 
 
-def _row_expand_binary_micro(base_view, expand_view, out_view, *, dtype, shape, base_addr, op_name):
+def _row_expand_binary_micro(
+    base_view, expand_view, out_view, *, dtype, shape, base_addr, op_name
+):
     rows, cols = _check_row_expand_operands(
-        expand_view, out_view, dtype=dtype, shape=shape, context=f"TROWEXPAND_{op_name[1:].upper()}"
+        expand_view,
+        out_view,
+        dtype=dtype,
+        shape=shape,
+        context=f"TROWEXPAND_{op_name[1:].upper()}",
     )
     _require_view_shape(
         base_view,
@@ -1022,11 +1060,15 @@ def _row_expand_binary_micro(base_view, expand_view, out_view, *, dtype, shape, 
     expand_addr_value = _const_i64(base_addr + buf_bytes)
     out_addr_value = _const_i64(base_addr + buf_bytes * 2)
 
-    base_tile = _dsl_pto.make_tile_buffer(dtype, shape, space="VEC").alloc(addr=base_addr_value)
+    base_tile = _dsl_pto.make_tile_buffer(dtype, shape, space="VEC").alloc(
+        addr=base_addr_value
+    )
     expand_tile = _dsl_pto.make_tile_buffer(
         dtype, shape, space="VEC", valid_shape=[rows, 1]
     ).alloc(addr=expand_addr_value)
-    out_tile = _dsl_pto.make_tile_buffer(dtype, shape, space="VEC").alloc(addr=out_addr_value)
+    out_tile = _dsl_pto.make_tile_buffer(dtype, shape, space="VEC").alloc(
+        addr=out_addr_value
+    )
 
     _dsl_pto.load(base_view, base_tile)
     _dsl_pto.load(expand_view, expand_tile)
@@ -1199,7 +1241,9 @@ def _col_reduce_micro_no_post_update(
             accum = reduce_op(vreg_type, accum, tmp, mask)
         if const_expr(remain):
             tail_row = 2 * loop_pairs + 1
-            src_tail = _dsl_pto.vlds(vreg_type, src_ptr, _scalar.const(col + tail_row * cols))
+            src_tail = _dsl_pto.vlds(
+                vreg_type, src_ptr, _scalar.const(col + tail_row * cols)
+            )
             accum = reduce_op(vreg_type, accum, src_tail, mask)
         _dsl_pto.vsts(accum, out_ptr, _scalar.const(col), mask)
 
@@ -1217,12 +1261,18 @@ def _col_reduce_micro_post_update(
         active = builtins.min(lanes, cols - col)
         mask = _mask_for_chunk(dtype, active)
         chunk_base = src_cursor
-        accum, src_cursor = _dsl_pto.vlds_post(vreg_type, ptr_type, src_cursor, lane_step)
+        accum, src_cursor = _dsl_pto.vlds_post(
+            vreg_type, ptr_type, src_cursor, lane_step
+        )
         row0_ptr = _dsl_pto.addptr(chunk_base, _scalar.const(cols))
         row1_ptr = _dsl_pto.addptr(chunk_base, _scalar.const(cols * 2))
         for _ in range_constexpr(loop_pairs):
-            src0, row0_ptr = _dsl_pto.vlds_post(vreg_type, ptr_type, row0_ptr, pair_stride)
-            src1, row1_ptr = _dsl_pto.vlds_post(vreg_type, ptr_type, row1_ptr, pair_stride)
+            src0, row0_ptr = _dsl_pto.vlds_post(
+                vreg_type, ptr_type, row0_ptr, pair_stride
+            )
+            src1, row1_ptr = _dsl_pto.vlds_post(
+                vreg_type, ptr_type, row1_ptr, pair_stride
+            )
             tmp = reduce_op(vreg_type, src0, src1, mask)
             accum = reduce_op(vreg_type, accum, tmp, mask)
         if const_expr(remain):
@@ -1242,7 +1292,12 @@ def _gather_micro(
     base_addr,
 ):
     rows, cols, _, _ = _check_gather_operands(
-        src_view, indices_view, out_view, dtype=dtype, index_dtype=index_dtype, shape=shape
+        src_view,
+        indices_view,
+        out_view,
+        dtype=dtype,
+        index_dtype=index_dtype,
+        shape=shape,
     )
     src_bytes = rows * cols * _dtype_byte_width(dtype)
     idx_bytes = rows * cols * _dtype_byte_width(index_dtype)
@@ -1252,7 +1307,9 @@ def _gather_micro(
     out_addr = _const_i64(base_addr + src_bytes + idx_bytes)
 
     src_tile = _dsl_pto.make_tile_buffer(dtype, shape, space="VEC").alloc(addr=src_addr)
-    idx_tile = _dsl_pto.make_tile_buffer(index_dtype, shape, space="VEC").alloc(addr=idx_addr)
+    idx_tile = _dsl_pto.make_tile_buffer(index_dtype, shape, space="VEC").alloc(
+        addr=idx_addr
+    )
     out_tile = _dsl_pto.make_tile_buffer(dtype, shape, space="VEC").alloc(addr=out_addr)
 
     _dsl_pto.load(src_view, src_tile)
@@ -1272,7 +1329,9 @@ def _gather_micro(
             offset = _scalar.const(row_base + col)
             mask = _mask_for_chunk(dtype, active)
             idx_vec = _dsl_pto.vlds(index_vreg_type, idx_ptr, offset)
-            out_vec = _dsl_pto.vgather2(vreg_type, src_ptr, idx_vec, _scalar.const(active))
+            out_vec = _dsl_pto.vgather2(
+                vreg_type, src_ptr, idx_vec, _scalar.const(active)
+            )
             _dsl_pto.vsts(out_vec, out_ptr, offset, mask)
 
     _dsl_pto.store(out_tile, out_view)
@@ -1280,7 +1339,9 @@ def _gather_micro(
 
 
 def _mrgsort_micro(src_view, out_view, *, dtype, shape, block_len, base_addr):
-    _, cols = _check_mrgsort_operands(src_view, out_view, dtype=dtype, shape=shape, block_len=block_len)
+    _, cols = _check_mrgsort_operands(
+        src_view, out_view, dtype=dtype, shape=shape, block_len=block_len
+    )
     src_addr = _const_i64(base_addr)
     out_addr = _const_i64(base_addr + cols * _dtype_byte_width(dtype))
 
@@ -1320,7 +1381,9 @@ def _mrgsort_micro(src_view, out_view, *, dtype, shape, block_len, base_addr):
 
 
 def _sort32_micro(src_view, idx_view, out_view, *, dtype, shape, base_addr):
-    rows, cols, out_cols = _check_sort32_operands(src_view, idx_view, out_view, dtype=dtype, shape=shape)
+    rows, cols, out_cols = _check_sort32_operands(
+        src_view, idx_view, out_view, dtype=dtype, shape=shape
+    )
     src_bytes = rows * cols * _dtype_byte_width(dtype)
     idx_bytes = rows * cols * 4
 
@@ -1328,9 +1391,15 @@ def _sort32_micro(src_view, idx_view, out_view, *, dtype, shape, base_addr):
     idx_addr = _const_i64(base_addr + src_bytes)
     out_addr = _const_i64(base_addr + src_bytes + idx_bytes)
 
-    src_tile = _dsl_pto.make_tile_buffer(dtype, [rows, cols], space="VEC").alloc(addr=src_addr)
-    idx_tile = _dsl_pto.make_tile_buffer(_dsl_pto.uint32, [rows, cols], space="VEC").alloc(addr=idx_addr)
-    out_tile = _dsl_pto.make_tile_buffer(dtype, [rows, out_cols], space="VEC").alloc(addr=out_addr)
+    src_tile = _dsl_pto.make_tile_buffer(dtype, [rows, cols], space="VEC").alloc(
+        addr=src_addr
+    )
+    idx_tile = _dsl_pto.make_tile_buffer(
+        _dsl_pto.uint32, [rows, cols], space="VEC"
+    ).alloc(addr=idx_addr)
+    out_tile = _dsl_pto.make_tile_buffer(dtype, [rows, out_cols], space="VEC").alloc(
+        addr=out_addr
+    )
 
     _dsl_pto.load(src_view, src_tile)
     _dsl_pto.load(idx_view, idx_tile)
@@ -1350,9 +1419,16 @@ def _sort32_micro(src_view, idx_view, out_view, *, dtype, shape, base_addr):
     return out_view
 
 
-def _binary_micro(lhs_view, rhs_view, out_view, *, dtype, shape, lanes, base_addr, op_name, impl):
+def _binary_micro(
+    lhs_view, rhs_view, out_view, *, dtype, shape, lanes, base_addr, op_name, impl
+):
     rows, cols = _check_tbinop_operands(
-        lhs_view, rhs_view, out_view, dtype=dtype, shape=shape, context=op_name.upper().replace("V", "T", 1)
+        lhs_view,
+        rhs_view,
+        out_view,
+        dtype=dtype,
+        shape=shape,
+        context=op_name.upper().replace("V", "T", 1),
     )
     lanes = _resolve_lanes(dtype, lanes)
     element_count = rows * cols
@@ -1377,7 +1453,9 @@ def _binary_micro(lhs_view, rhs_view, out_view, *, dtype, shape, lanes, base_add
     impl_kind = _normalize_vf_impl_kind(impl)
     is_contiguous = rows == 1 or cols == element_count
     if const_expr(impl_kind == VF_IMPL_DEFAULT):
-        impl_kind = VF_IMPL_1D_POST_UPDATE if is_contiguous else VF_IMPL_2D_NO_POST_UPDATE
+        impl_kind = (
+            VF_IMPL_1D_POST_UPDATE if is_contiguous else VF_IMPL_2D_NO_POST_UPDATE
+        )
 
     if const_expr(impl_kind == VF_IMPL_1D_NO_POST_UPDATE):
         _binary_micro_1d_no_post_update(
@@ -1447,7 +1525,16 @@ def _binary_micro_1d_no_post_update(
 
 
 def _binary_micro_1d_post_update(
-    lhs_ptr, rhs_ptr, out_ptr, *, ptr_type, dtype, lanes, element_count, vreg_type, micro_op
+    lhs_ptr,
+    rhs_ptr,
+    out_ptr,
+    *,
+    ptr_type,
+    dtype,
+    lanes,
+    element_count,
+    vreg_type,
+    micro_op,
 ):
     lhs_cursor = lhs_ptr
     rhs_cursor = rhs_ptr
@@ -1456,8 +1543,12 @@ def _binary_micro_1d_post_update(
     for offset in range_constexpr(0, element_count, lanes):
         active = builtins.min(lanes, element_count - offset)
         mask = _mask_for_chunk(dtype, active)
-        lhs_vec, lhs_cursor = _dsl_pto.vlds_post(vreg_type, ptr_type, lhs_cursor, lane_step)
-        rhs_vec, rhs_cursor = _dsl_pto.vlds_post(vreg_type, ptr_type, rhs_cursor, lane_step)
+        lhs_vec, lhs_cursor = _dsl_pto.vlds_post(
+            vreg_type, ptr_type, lhs_cursor, lane_step
+        )
+        rhs_vec, rhs_cursor = _dsl_pto.vlds_post(
+            vreg_type, ptr_type, rhs_cursor, lane_step
+        )
         out_vec = micro_op(vreg_type, lhs_vec, rhs_vec, mask)
         out_cursor = _dsl_pto.vsts_post(ptr_type, out_vec, out_cursor, lane_step, mask)
 
@@ -1495,7 +1586,9 @@ def _binary_micro_2d_post_update(
 
 def _rsqrt_micro(src_view, out_view, *, dtype, shape, lanes, base_addr):
     if any(not isinstance(dim, int) for dim in shape):
-        raise ValueError("micro tile lowering currently requires a static integer shape.")
+        raise ValueError(
+            "micro tile lowering currently requires a static integer shape."
+        )
 
     lanes = _resolve_lanes(dtype, lanes)
     element_count = 1
@@ -1530,7 +1623,9 @@ def _rsqrt_micro(src_view, out_view, *, dtype, shape, lanes, base_addr):
 
 def _unary_micro(src_view, out_view, *, dtype, shape, lanes, base_addr, op_name):
     if any(not isinstance(dim, int) for dim in shape):
-        raise ValueError("micro tile lowering currently requires a static integer shape.")
+        raise ValueError(
+            "micro tile lowering currently requires a static integer shape."
+        )
 
     lanes = _resolve_lanes(dtype, lanes)
     element_count = 1
@@ -1555,8 +1650,10 @@ def _unary_micro(src_view, out_view, *, dtype, shape, lanes, base_addr, op_name)
         mask = _mask_for_chunk(dtype, active)
         index = _scalar.const(offset)
         src_vec = _dsl_pto.vlds(_dsl_pto.VRegType(lanes, dtype), src_ptr, index)
-        out_vec = src_vec if micro_op is None else micro_op(
-            _dsl_pto.VRegType(lanes, dtype), src_vec, mask
+        out_vec = (
+            src_vec
+            if micro_op is None
+            else micro_op(_dsl_pto.VRegType(lanes, dtype), src_vec, mask)
         )
         _dsl_pto.vsts(out_vec, out_ptr, index, mask)
 

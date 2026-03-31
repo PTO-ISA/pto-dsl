@@ -52,15 +52,40 @@ def build(M=16, K=64, N=32, lhs_variant="e5m2", rhs_variant="e5m2"):
 
         tv_a = pto.as_tensor(lhs_tensor, ptr=a_ptr, shape=[cM, cK], strides=[cK, c1])
         tv_b = pto.as_tensor(rhs_tensor, ptr=b_ptr, shape=[cK, cN], strides=[cN, c1])
-        tv_scale_a = pto.as_tensor(lhs_scale_tensor, ptr=a_scale_ptr, shape=[cM, cScaleK], strides=[cScaleK, c1])
-        tv_scale_b = pto.as_tensor(rhs_scale_tensor, ptr=b_scale_ptr, shape=[cScaleK, cN], strides=[cN, c1])
-        tv_bias = pto.as_tensor(bias_tensor, ptr=bias_ptr, shape=[c1, cN], strides=[cN, c1])
+        tv_scale_a = pto.as_tensor(
+            lhs_scale_tensor,
+            ptr=a_scale_ptr,
+            shape=[cM, cScaleK],
+            strides=[cScaleK, c1],
+        )
+        tv_scale_b = pto.as_tensor(
+            rhs_scale_tensor, ptr=b_scale_ptr, shape=[cScaleK, cN], strides=[cN, c1]
+        )
+        tv_bias = pto.as_tensor(
+            bias_tensor, ptr=bias_ptr, shape=[c1, cN], strides=[cN, c1]
+        )
 
-        sv_a = pto.slice_view(lhs_tile_view, source=tv_a, offsets=[c0, c0], sizes=[cM, cK])
-        sv_b = pto.slice_view(rhs_tile_view, source=tv_b, offsets=[c0, c0], sizes=[cK, cN])
-        sv_scale_a = pto.slice_view(lhs_scale_tile_view, source=tv_scale_a, offsets=[c0, c0], sizes=[cM, cScaleK])
-        sv_scale_b = pto.slice_view(rhs_scale_tile_view, source=tv_scale_b, offsets=[c0, c0], sizes=[cScaleK, cN])
-        sv_bias = pto.slice_view(bias_tile_view, source=tv_bias, offsets=[c0, c0], sizes=[c1, cN])
+        sv_a = pto.slice_view(
+            lhs_tile_view, source=tv_a, offsets=[c0, c0], sizes=[cM, cK]
+        )
+        sv_b = pto.slice_view(
+            rhs_tile_view, source=tv_b, offsets=[c0, c0], sizes=[cK, cN]
+        )
+        sv_scale_a = pto.slice_view(
+            lhs_scale_tile_view,
+            source=tv_scale_a,
+            offsets=[c0, c0],
+            sizes=[cM, cScaleK],
+        )
+        sv_scale_b = pto.slice_view(
+            rhs_scale_tile_view,
+            source=tv_scale_b,
+            offsets=[c0, c0],
+            sizes=[cScaleK, cN],
+        )
+        sv_bias = pto.slice_view(
+            bias_tile_view, source=tv_bias, offsets=[c0, c0], sizes=[c1, cN]
+        )
 
         with pto.cube_section():
             a_tile = pto.alloc_tile(lhs_tile)
@@ -75,7 +100,9 @@ def build(M=16, K=64, N=32, lhs_variant="e5m2", rhs_variant="e5m2"):
             pto.load(sv_scale_a, a_scale_tile)
             pto.load(sv_scale_b, b_scale_tile)
             pto.load(sv_bias, bias_tile_buf)
-            pto.matmul_mx_bias(a_tile, a_scale_tile, b_tile, b_scale_tile, bias_tile_buf, acc_tile_buf)
+            pto.matmul_mx_bias(
+                a_tile, a_scale_tile, b_tile, b_scale_tile, bias_tile_buf, acc_tile_buf
+            )
 
     return matmul_mxfp8
 

@@ -35,5 +35,11 @@ def test_tile_micro_coverage_summary_matches_public_surface():
 
 
 def test_checked_in_tile_micro_checklist_is_in_sync():
-    checklist = Path(__file__).resolve().parents[2] / "ptodsl" / "lib" / "a5" / "TILE_MICRO_CHECKLIST.md"
+    checklist = (
+        Path(__file__).resolve().parents[2]
+        / "ptodsl"
+        / "lib"
+        / "a5"
+        / "TILE_MICRO_CHECKLIST.md"
+    )
     assert checklist.read_text(encoding="utf-8") == coverage_markdown()

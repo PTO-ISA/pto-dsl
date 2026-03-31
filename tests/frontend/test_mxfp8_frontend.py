@@ -11,6 +11,7 @@ class _StubType:
 
 def test_mxfp8_family_uses_e5m2_data_and_e8m0_scale(monkeypatch):
     stub_ir = types.SimpleNamespace(
+        F32Type=_StubType,
         Float8E5M2Type=_StubType,
         Float8E8M0FNUType=_StubType,
         Float8E4M3FNType=_StubType,
@@ -29,6 +30,7 @@ def test_mxfp8_family_uses_e5m2_data_and_e8m0_scale(monkeypatch):
 
 def test_float8_aliases_accept_common_mlir_ctor_names(monkeypatch):
     stub_ir = types.SimpleNamespace(
+        F32Type=_StubType,
         Float8E4M3FNType=_StubType,
         Float8E5M2Type=_StubType,
         Float8E8M0FNUType=_StubType,
@@ -42,6 +44,7 @@ def test_float8_aliases_accept_common_mlir_ctor_names(monkeypatch):
 
 def test_make_mxfp8_accepts_mixed_lhs_rhs_variants(monkeypatch):
     stub_ir = types.SimpleNamespace(
+        F32Type=_StubType,
         Float8E4M3FNType=_StubType,
         Float8E5M2Type=_StubType,
         Float8E8M0FNUType=_StubType,

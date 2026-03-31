@@ -4,6 +4,7 @@ from mlir.dialects import func, pto as _pto
 from mlir.ir import Context, InsertionPoint, Location, Module
 
 from ..api.scalar import wrap_value
+from ..constexpr import is_constexpr_annotation
 
 
 def _resolve_meta(meta_fn):
@@ -19,6 +20,8 @@ def _resolve_arg_types(signature, meta_map):
     arg_types = []
     for param in signature.parameters.values():
         annot = param.annotation
+        if is_constexpr_annotation(annot):
+            continue
         if isinstance(annot, str):
             if annot not in meta_map:
                 raise ValueError(f"Unknown annotation '{annot}'.")
@@ -89,7 +92,17 @@ def to_ir_module(*, meta_data):
                 entry = ir_func.add_entry_block()
 
             with InsertionPoint(entry):
-                wrapped_args = [wrap_value(arg) for arg in entry.arguments]
+                wrapped_args = []
+                entry_arg_iter = iter(entry.arguments)
+                for param in sig.parameters.values():
+                    if is_constexpr_annotation(param.annotation):
+                        if param.default is inspect._empty:
+                            raise ValueError(
+                                f"Constexpr argument '{param.name}' requires a default value."
+                            )
+                        wrapped_args.append(param.default)
+                    else:
+                        wrapped_args.append(wrap_value(next(entry_arg_iter)))
                 injected = set(meta_map.keys())
                 old_globals = _inject_globals(fn, meta_map)
                 try:

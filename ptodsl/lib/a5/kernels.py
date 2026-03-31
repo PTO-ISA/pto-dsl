@@ -170,7 +170,9 @@ def build_mxfp8_matmul(*, m=16, k=64, n=32, lhs_variant="e5m2", rhs_variant="e5m
     return a5_mxfp8_matmul
 
 
-def build_cube_matmul(*, m=16, k=32, n=16, lhs_dtype=None, rhs_dtype=None, acc_dtype=None):
+def build_cube_matmul(
+    *, m=16, k=32, n=16, lhs_dtype=None, rhs_dtype=None, acc_dtype=None
+):
     lhs_dtype = pto.float16 if lhs_dtype is None else lhs_dtype
     rhs_dtype = pto.float16 if rhs_dtype is None else rhs_dtype
     acc_dtype = pto.float32 if acc_dtype is None else acc_dtype
@@ -183,7 +185,9 @@ def build_cube_matmul(*, m=16, k=32, n=16, lhs_dtype=None, rhs_dtype=None, acc_d
         }
 
     @to_ir_module(meta_data=meta_data)
-    def a5_cube_matmul(lhs_ptr: "ptr_lhs", rhs_ptr: "ptr_rhs", out_ptr: "ptr_out") -> None:
+    def a5_cube_matmul(
+        lhs_ptr: "ptr_lhs", rhs_ptr: "ptr_rhs", out_ptr: "ptr_out"
+    ) -> None:
         c0 = s.const(0)
         lhs = pto.make_tensor(lhs_ptr, shape=[m, k], dtype=lhs_dtype)
         rhs = pto.make_tensor(rhs_ptr, shape=[k, n], dtype=rhs_dtype)

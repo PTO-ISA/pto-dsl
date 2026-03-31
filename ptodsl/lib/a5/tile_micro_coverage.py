@@ -1,6 +1,5 @@
 from ptodsl import tile
 
-
 TILE_MICRO_COVERAGE = {
     "mov": {
         "status": "implemented",
@@ -191,7 +190,9 @@ def coverage_markdown():
     for name in tile.__all__:
         entry = TILE_MICRO_COVERAGE[name]
         helper = entry["helper"] or "-"
-        lines.append(f"| `{name}` | `{entry['status']}` | `{helper}` | {entry['note']} |")
+        lines.append(
+            f"| `{name}` | `{entry['status']}` | `{helper}` | {entry['note']} |"
+        )
     return "\n".join(lines) + "\n"
 
 

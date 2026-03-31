@@ -239,7 +239,9 @@ def test_a5_row_reduce_micro_emits_reduction_micro_ops(
         ("col_min_micro", "pto.vmin", "pto.tcolmin", a5.VF_IMPL_1D_POST_UPDATE),
     ],
 )
-def test_a5_col_reduce_micro_emits_template_lowering(helper_name, reduce_op, tile_op, impl):
+def test_a5_col_reduce_micro_emits_template_lowering(
+    helper_name, reduce_op, tile_op, impl
+):
     def meta_data():
         return {
             "ptr_t": pto.ptr(pto.float32),
@@ -340,7 +342,10 @@ def test_a5_add_micro_rejects_view_dtype_mismatch():
     def meta_data():
         return {"ptr_t": pto.ptr(pto.float16)}
 
-    with pytest.raises(ValueError, match="TADD input tile src0, src1 and dst tile data type mismatch"):
+    with pytest.raises(
+        ValueError, match="TADD input tile src0, src1 and dst tile data type mismatch"
+    ):
+
         @to_ir_module(meta_data=meta_data)
         def invalid_add(src0: "ptr_t", src1: "ptr_t", dst: "ptr_t") -> None:
             lhs = pto.make_tensor(src0, shape=[32, 32], dtype=pto.float16)
@@ -360,7 +365,10 @@ def test_a5_row_expand_micro_rejects_non_column_source():
     def meta_data():
         return {"ptr_t": pto.ptr(pto.float32)}
 
-    with pytest.raises(ValueError, match="TROWEXPAND source valid shape must be \\[rows, 1\\]"):
+    with pytest.raises(
+        ValueError, match="TROWEXPAND source valid shape must be \\[rows, 1\\]"
+    ):
+
         @to_ir_module(meta_data=meta_data)
         def invalid_row_expand(src: "ptr_t", dst: "ptr_t") -> None:
             src_view = pto.make_tensor(src, shape=[1, 32], dtype=pto.float32)
@@ -379,6 +387,7 @@ def test_a5_row_reduce_micro_rejects_non_single_column_output():
         return {"ptr_t": pto.ptr(pto.float32)}
 
     with pytest.raises(ValueError, match="use a single-column output tile"):
+
         @to_ir_module(meta_data=meta_data)
         def invalid_row_reduce(src: "ptr_t", dst: "ptr_t") -> None:
             src_view = pto.make_tensor(src, shape=[32, 32], dtype=pto.float32)
@@ -397,6 +406,7 @@ def test_a5_col_reduce_micro_rejects_unsupported_dtype():
         return {"ptr_t": pto.ptr(pto.bool)}
 
     with pytest.raises(ValueError, match="TCOLREDUCE input data type is not supported"):
+
         @to_ir_module(meta_data=meta_data)
         def invalid_col_reduce(src: "ptr_t", dst: "ptr_t") -> None:
             src_view = pto.make_tensor(src, shape=[32, 32], dtype=pto.bool)
