@@ -24,6 +24,8 @@ def _resolve_address_space(memory_space):
 
 
 def PtrType(dtype, memory_space=None):
+    if memory_space is None:
+        return _pto.PtrType.get(dtype)
     return _pto.PtrType.get(dtype, _resolve_address_space(memory_space))
 
 
