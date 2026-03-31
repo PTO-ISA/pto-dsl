@@ -3,7 +3,7 @@ from mlir.ir import F16Type, F32Type, IndexType, IntegerType
 
 
 def _unwrap(value):
-    if isinstance(value, Value):
+    if isinstance(value, Value) or hasattr(value, "raw"):
         return value.raw
     return value
 
@@ -79,6 +79,8 @@ class Value:
 def wrap_value(value):
     if isinstance(value, Value):
         return value
+    if hasattr(value, "raw"):
+        return Value(value.raw)
     return Value(value)
 
 

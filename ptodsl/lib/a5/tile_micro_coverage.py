@@ -3,72 +3,72 @@ from ptodsl import tile
 TILE_MICRO_COVERAGE = {
     "mov": {
         "status": "implemented",
-        "helper": "mov_micro",
+        "helper": "tmov",
         "note": "UB stage + vlds/vsts copy loop.",
     },
     "add": {
         "status": "implemented",
-        "helper": "add_micro",
+        "helper": "tadd",
         "note": "UB stage + constexpr-specialized TBinOp-style vlds/vadd/vsts lowering.",
     },
     "sub": {
         "status": "implemented",
-        "helper": "sub_micro",
+        "helper": "tsub",
         "note": "UB stage + constexpr-specialized TBinOp-style vlds/vsub/vsts lowering.",
     },
     "div": {
         "status": "implemented",
-        "helper": "div_micro",
+        "helper": "tdiv",
         "note": "UB stage + constexpr-specialized TBinOp-style vlds/vdiv/vsts lowering.",
     },
     "mul": {
         "status": "implemented",
-        "helper": "mul_micro",
+        "helper": "tmul",
         "note": "UB stage + constexpr-specialized TBinOp-style vlds/vmul/vsts lowering.",
     },
     "or_": {
         "status": "implemented",
-        "helper": "or_micro",
+        "helper": "tor_",
         "note": "UB stage + constexpr-specialized TBinOp-style vlds/vor/vsts lowering.",
     },
     "gather": {
         "status": "partial",
-        "helper": "gather_micro",
+        "helper": "tgather",
         "note": "Indexed gather is implemented via vgather2 for same-width source/index pairs; mask-pattern gather still needs unsupported vsqz-style micro support.",
     },
     "exp": {
         "status": "implemented",
-        "helper": "exp_micro",
+        "helper": "texp",
         "note": "UB stage + vlds/vexp/vsts loop.",
     },
     "log": {
         "status": "implemented",
-        "helper": "log_micro",
+        "helper": "tlog",
         "note": "UB stage + vlds/vln/vsts loop.",
     },
     "relu": {
         "status": "implemented",
-        "helper": "relu_micro",
+        "helper": "trelu",
         "note": "UB stage + vlds/vrelu/vsts loop.",
     },
     "abs": {
         "status": "implemented",
-        "helper": "abs_micro",
+        "helper": "tabs",
         "note": "UB stage + vlds/vabs/vsts loop.",
     },
     "sqrt": {
         "status": "implemented",
-        "helper": "sqrt_micro",
+        "helper": "tsqrt",
         "note": "UB stage + vlds/vsqrt/vsts loop.",
     },
     "rsqrt": {
         "status": "implemented",
-        "helper": "rsqrt_micro",
-        "note": "UB stage + vsqrt/vrec micro sequence.",
+        "helper": "trsqrt",
+        "note": "UB stage + vsqrt/vrec sequence.",
     },
     "reciprocal": {
         "status": "implemented",
-        "helper": "reciprocal_micro",
+        "helper": "trecip",
         "note": "UB stage + vlds/vrec/vsts loop.",
     },
     "matmul": {
@@ -93,67 +93,77 @@ TILE_MICRO_COVERAGE = {
     },
     "row_sum": {
         "status": "implemented",
-        "helper": "row_sum_micro",
+        "helper": "trow_sum",
         "note": "Static-shape row reduction via vcadd + point-store.",
     },
     "row_min": {
         "status": "implemented",
-        "helper": "row_min_micro",
+        "helper": "trow_min",
         "note": "Static-shape row reduction via vcmin + point-store.",
     },
     "row_max": {
         "status": "implemented",
-        "helper": "row_max_micro",
+        "helper": "trow_max",
         "note": "Static-shape row reduction via vcmax + point-store.",
+    },
+    "row_prod": {
+        "status": "blocked",
+        "helper": None,
+        "note": "No row-product micro lowering is wired yet.",
     },
     "row_expand": {
         "status": "implemented",
-        "helper": "row_expand_micro",
+        "helper": "trow_expand",
         "note": "Static-shape canonical broadcast via vldas/vldus/vdup/vsts.",
     },
     "row_expand_sub": {
         "status": "implemented",
-        "helper": "row_expand_sub_micro",
+        "helper": "trow_expand_sub",
         "note": "Static-shape canonical broadcast via vldas/vldus/vdup/vsub/vsts.",
     },
     "row_expand_div": {
         "status": "implemented",
-        "helper": "row_expand_div_micro",
+        "helper": "trow_expand_div",
         "note": "Static-shape canonical broadcast via vldas/vldus/vdup/vdiv/vsts.",
     },
     "row_expand_mul": {
         "status": "implemented",
-        "helper": "row_expand_mul_micro",
+        "helper": "trow_expand_mul",
         "note": "Static-shape canonical broadcast via vldas/vldus/vdup/vmul/vsts.",
     },
     "col_sum": {
         "status": "implemented",
-        "helper": "col_sum_micro",
+        "helper": "tcol_sum",
         "note": "Static-shape TColReduceOps-style column reduction via vadd.",
     },
     "col_min": {
         "status": "implemented",
-        "helper": "col_min_micro",
+        "helper": "tcol_min",
         "note": "Static-shape TColReduceOps-style column reduction via vmin.",
     },
     "col_max": {
         "status": "implemented",
-        "helper": "col_max_micro",
+        "helper": "tcol_max",
         "note": "Static-shape TColReduceOps-style column reduction via vmax.",
+    },
+    "col_prod": {
+        "status": "blocked",
+        "helper": None,
+        "note": "No column-product micro lowering is wired yet.",
     },
     "col_expand": {
         "status": "implemented",
-        "helper": "col_expand_micro",
+        "helper": "tcol_expand",
         "note": "Static-shape canonical broadcast via vlds/vsts replication.",
     },
     "mrgsort": {
         "status": "implemented",
-        "helper": "mrgsort_micro",
+        "helper": "tmrgsort",
         "note": "Single-list row-major merge sort via vmrgsort4.",
     },
     "sort32": {
         "status": "implemented",
-        "helper": "sort32_micro",
+        "helper": "tsort32",
         "note": "Static-shape block sort via vbitsort.",
     },
     "subset": {
@@ -184,15 +194,13 @@ def coverage_markdown():
         f"- Blocked: `{counts.get('blocked', 0)}`",
         f"- Not applicable: `{counts.get('not_applicable', 0)}`",
         "",
-        "| tile op | status | helper | note |",
-        "| --- | --- | --- | --- |",
+        "| tile op | helper | note |",
+        "| --- | --- | --- |",
     ]
     for name in tile.__all__:
         entry = TILE_MICRO_COVERAGE[name]
         helper = entry["helper"] or "-"
-        lines.append(
-            f"| `{name}` | `{entry['status']}` | `{helper}` | {entry['note']} |"
-        )
+        lines.append(f"| `{name}` | `{helper}` | {entry['note']} |")
     return "\n".join(lines) + "\n"
 
 

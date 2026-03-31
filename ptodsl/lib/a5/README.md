@@ -1,18 +1,28 @@
 # A5 Library Layer
 
-This directory contains a first PTODSL library-style translation layer for the
-`pto-isa/include/pto/npu/a5` surface.
+This directory contains a PTODSL library-style translation layer for the
+`pto-isa/include/pto/npu/a5` surface, organized around the PTO tile opcode that
+each file is re-expressing with PTO micro instructions.
 
-The scope of this pass is:
+The scope of this layout is:
 
-- Pythonic wrappers over PTO tile ops and selected micro instructions
-- A5-flavored compatibility aliases such as `TLoad`, `TAdd`, `TMatmul`, and `TStore`
-- Translated builder kernels that emit `.pto` through PTODSL
+- Small, readable files that show how a tile helper is written from PTO micro
+  opcodes such as `pto.vlds`, `pto.vadd`, and `pto.vsts`
+- A5-flavored aliases such as `TLoad`, `TAdd`, `TMatmul`, and `TStore`
+- Example builder kernels that emit `.pto` through PTODSL
 - A checked-in generation flow for reproducible `.pto` artifacts
 
 Entry points:
 
-- [`ops.py`](./ops.py): reusable A5-style helpers built on PTODSL and PTO dialect ops
+- [`tbinary.py`](./tbinary.py): tile binary helpers such as `tadd`, `tsub`, `tmul`,
+  `tdiv`, and `tor_`, written with PTO vector micro ops
+- [`tunary.py`](./tunary.py): tile unary helpers such as `texp`, `tlog`, `trelu`,
+  `tsqrt`, `trsqrt`, and `trecip`
+- [`texpand.py`](./texpand.py): row and column broadcast helpers
+- [`treduce.py`](./treduce.py): row and column reduction helpers
+- [`tsort.py`](./tsort.py): gather and sort helpers
+- [`native.py`](./native.py): helpers that still map directly to tile/cube ops
+- [`ops.py`](./ops.py): the public A5 surface that re-exports the split helpers
 - [`kernels.py`](./kernels.py): translated example kernels
 - [`generated`](./generated): emitted `.pto` artifacts from `scripts/generate_a5_pto.py`
 

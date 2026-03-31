@@ -1,43 +1,45 @@
 # Tile Micro Coverage
 
-- Total public tile ops: `32`
+- Total public tile ops: `34`
 - Implemented: `26`
 - Partial: `1`
 - Pending: `0`
-- Blocked: `4`
+- Blocked: `6`
 - Not applicable: `1`
 
-| tile op | status | helper | note |
-| --- | --- | --- | --- |
-| `mov` | `implemented` | `mov_micro` | UB stage + vlds/vsts copy loop. |
-| `add` | `implemented` | `add_micro` | UB stage + constexpr-specialized TBinOp-style vlds/vadd/vsts lowering. |
-| `sub` | `implemented` | `sub_micro` | UB stage + constexpr-specialized TBinOp-style vlds/vsub/vsts lowering. |
-| `div` | `implemented` | `div_micro` | UB stage + constexpr-specialized TBinOp-style vlds/vdiv/vsts lowering. |
-| `mul` | `implemented` | `mul_micro` | UB stage + constexpr-specialized TBinOp-style vlds/vmul/vsts lowering. |
-| `or_` | `implemented` | `or_micro` | UB stage + constexpr-specialized TBinOp-style vlds/vor/vsts lowering. |
-| `gather` | `partial` | `gather_micro` | Indexed gather is implemented via vgather2 for same-width source/index pairs; mask-pattern gather still needs unsupported vsqz-style micro support. |
-| `exp` | `implemented` | `exp_micro` | UB stage + vlds/vexp/vsts loop. |
-| `log` | `implemented` | `log_micro` | UB stage + vlds/vln/vsts loop. |
-| `relu` | `implemented` | `relu_micro` | UB stage + vlds/vrelu/vsts loop. |
-| `abs` | `implemented` | `abs_micro` | UB stage + vlds/vabs/vsts loop. |
-| `sqrt` | `implemented` | `sqrt_micro` | UB stage + vlds/vsqrt/vsts loop. |
-| `rsqrt` | `implemented` | `rsqrt_micro` | UB stage + vsqrt/vrec micro sequence. |
-| `reciprocal` | `implemented` | `reciprocal_micro` | UB stage + vlds/vrec/vsts loop. |
-| `matmul` | `blocked` | `-` | Cube/L0 path is not a pure vector-micro rewrite target. |
-| `matmul_bias` | `blocked` | `-` | Cube/L0 path is not a pure vector-micro rewrite target. |
-| `matmul_acc` | `blocked` | `-` | Cube/L0 path is not a pure vector-micro rewrite target. |
-| `extract` | `blocked` | `-` | Layout/L0 extraction op, not a vector-micro compute rewrite. |
-| `row_sum` | `implemented` | `row_sum_micro` | Static-shape row reduction via vcadd + point-store. |
-| `row_min` | `implemented` | `row_min_micro` | Static-shape row reduction via vcmin + point-store. |
-| `row_max` | `implemented` | `row_max_micro` | Static-shape row reduction via vcmax + point-store. |
-| `row_expand` | `implemented` | `row_expand_micro` | Static-shape canonical broadcast via vldas/vldus/vdup/vsts. |
-| `row_expand_sub` | `implemented` | `row_expand_sub_micro` | Static-shape canonical broadcast via vldas/vldus/vdup/vsub/vsts. |
-| `row_expand_div` | `implemented` | `row_expand_div_micro` | Static-shape canonical broadcast via vldas/vldus/vdup/vdiv/vsts. |
-| `row_expand_mul` | `implemented` | `row_expand_mul_micro` | Static-shape canonical broadcast via vldas/vldus/vdup/vmul/vsts. |
-| `col_sum` | `implemented` | `col_sum_micro` | Static-shape TColReduceOps-style column reduction via vadd. |
-| `col_min` | `implemented` | `col_min_micro` | Static-shape TColReduceOps-style column reduction via vmin. |
-| `col_max` | `implemented` | `col_max_micro` | Static-shape TColReduceOps-style column reduction via vmax. |
-| `col_expand` | `implemented` | `col_expand_micro` | Static-shape canonical broadcast via vlds/vsts replication. |
-| `mrgsort` | `implemented` | `mrgsort_micro` | Single-list row-major merge sort via vmrgsort4. |
-| `sort32` | `implemented` | `sort32_micro` | Static-shape block sort via vbitsort. |
-| `subset` | `not_applicable` | `-` | View helper only, not a tile compute op. |
+| tile op | helper | note |
+| --- | --- | --- |
+| `mov` | `tmov` | UB stage + vlds/vsts copy loop. |
+| `add` | `tadd` | UB stage + constexpr-specialized TBinOp-style vlds/vadd/vsts lowering. |
+| `sub` | `tsub` | UB stage + constexpr-specialized TBinOp-style vlds/vsub/vsts lowering. |
+| `div` | `tdiv` | UB stage + constexpr-specialized TBinOp-style vlds/vdiv/vsts lowering. |
+| `mul` | `tmul` | UB stage + constexpr-specialized TBinOp-style vlds/vmul/vsts lowering. |
+| `or_` | `tor_` | UB stage + constexpr-specialized TBinOp-style vlds/vor/vsts lowering. |
+| `gather` | `tgather` | Indexed gather is implemented via vgather2 for same-width source/index pairs; mask-pattern gather still needs unsupported vsqz-style micro support. |
+| `exp` | `texp` | UB stage + vlds/vexp/vsts loop. |
+| `log` | `tlog` | UB stage + vlds/vln/vsts loop. |
+| `relu` | `trelu` | UB stage + vlds/vrelu/vsts loop. |
+| `abs` | `tabs` | UB stage + vlds/vabs/vsts loop. |
+| `sqrt` | `tsqrt` | UB stage + vlds/vsqrt/vsts loop. |
+| `rsqrt` | `trsqrt` | UB stage + vsqrt/vrec sequence. |
+| `reciprocal` | `trecip` | UB stage + vlds/vrec/vsts loop. |
+| `matmul` | `-` | Cube/L0 path is not a pure vector-micro rewrite target. |
+| `matmul_bias` | `-` | Cube/L0 path is not a pure vector-micro rewrite target. |
+| `matmul_acc` | `-` | Cube/L0 path is not a pure vector-micro rewrite target. |
+| `extract` | `-` | Layout/L0 extraction op, not a vector-micro compute rewrite. |
+| `row_sum` | `trow_sum` | Static-shape row reduction via vcadd + point-store. |
+| `row_min` | `trow_min` | Static-shape row reduction via vcmin + point-store. |
+| `row_max` | `trow_max` | Static-shape row reduction via vcmax + point-store. |
+| `row_prod` | `-` | No row-product micro lowering is wired yet. |
+| `row_expand` | `trow_expand` | Static-shape canonical broadcast via vldas/vldus/vdup/vsts. |
+| `row_expand_sub` | `trow_expand_sub` | Static-shape canonical broadcast via vldas/vldus/vdup/vsub/vsts. |
+| `row_expand_div` | `trow_expand_div` | Static-shape canonical broadcast via vldas/vldus/vdup/vdiv/vsts. |
+| `row_expand_mul` | `trow_expand_mul` | Static-shape canonical broadcast via vldas/vldus/vdup/vmul/vsts. |
+| `col_sum` | `tcol_sum` | Static-shape TColReduceOps-style column reduction via vadd. |
+| `col_min` | `tcol_min` | Static-shape TColReduceOps-style column reduction via vmin. |
+| `col_max` | `tcol_max` | Static-shape TColReduceOps-style column reduction via vmax. |
+| `col_prod` | `-` | No column-product micro lowering is wired yet. |
+| `col_expand` | `tcol_expand` | Static-shape canonical broadcast via vlds/vsts replication. |
+| `mrgsort` | `tmrgsort` | Single-list row-major merge sort via vmrgsort4. |
+| `sort32` | `tsort32` | Static-shape block sort via vbitsort. |
+| `subset` | `-` | View helper only, not a tile compute op. |
