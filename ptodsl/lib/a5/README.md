@@ -13,6 +13,8 @@ The scope of this layout is:
 - Example builder kernels that emit `.pto` through PTODSL
 - A checked-in generation flow for reproducible `.pto` artifacts and HIVM LLVM
   sidecars for pure micro kernels
+- A public PTODSL import surface that now includes `ptodsl.pto` for pythonic
+  tensor/tile construction and `ptodsl.micro` for raw PTO micro instructions
 
 Entry points:
 
@@ -32,6 +34,13 @@ Entry points:
   no-section `build_hivm_vadd_demo()` flow that lowers through PTOAS VPTO into
   `llvm.hivm.*` intrinsics
 - [`generated`](./generated): emitted `.pto` artifacts from `scripts/generate_a5_pto.py`
+
+Recommended usage:
+
+- use `ptodsl.pto` to build tensors, views, and tile buffers ergonomically
+- use `ptodsl.micro` when you want raw PTO micro instructions directly
+- use this A5 layer when you want readable examples of how a tile helper such
+  as `tadd` or `trow_sum` is rewritten in terms of those micro instructions
 
 Regenerate the current artifacts with:
 
