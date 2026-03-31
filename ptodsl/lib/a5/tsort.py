@@ -1,8 +1,7 @@
 """Implement gather/sort tile ops with PTO vector micro instructions."""
 
-import builtins
-
-from mlir.dialects import pto
+from mlir.dialects import arith, pto
+from mlir.ir import IndexType
 
 from ._common import (
     alloc_tile_buffer,
@@ -12,14 +11,16 @@ from ._common import (
     const_i64,
     dtype_byte_width,
     mask_for_chunk,
+    matrix_active_lanes,
     micro_lane_count,
     ptr,
     raw,
     range_constexpr,
+    resolve_tile_spec,
     s,
     store_view,
-    uint32_type,
     load_view,
+    uint32_type,
     vreg_type,
 )
 
@@ -31,17 +32,29 @@ def tgather(
     *,
     dtype,
     index_dtype=None,
-    shape,
+    tile_shape=None,
+    shape=None,
+    valid_row=None,
+    valid_col=None,
+    valid_shape=None,
     base_addr=0,
 ):
     index_dtype = uint32_type() if index_dtype is None else index_dtype
+    rows, cols, valid_row, valid_col, type_valid_shape = resolve_tile_spec(
+        tile_shape=tile_shape,
+        shape=shape,
+        valid_row=valid_row,
+        valid_col=valid_col,
+        valid_shape=valid_shape,
+        context="TGATHER",
+    )
     rows, cols = check_gather_operands(
         src_view,
         indices_view,
         out_view,
         dtype=dtype,
         index_dtype=index_dtype,
-        shape=shape,
+        shape=[rows, cols],
     )
     src_bytes = rows * cols * dtype_byte_width(dtype)
     idx_bytes = rows * cols * dtype_byte_width(index_dtype)
@@ -50,9 +63,33 @@ def tgather(
     idx_addr = const_i64(base_addr + src_bytes)
     out_addr = const_i64(base_addr + src_bytes + idx_bytes)
 
-    src_tile = alloc_tile_buffer(dtype, shape, space="VEC", addr=src_addr)
-    idx_tile = alloc_tile_buffer(index_dtype, shape, space="VEC", addr=idx_addr)
-    out_tile = alloc_tile_buffer(dtype, shape, space="VEC", addr=out_addr)
+    src_tile = alloc_tile_buffer(
+        dtype,
+        [rows, cols],
+        space="VEC",
+        addr=src_addr,
+        valid_shape=type_valid_shape,
+        valid_row=valid_row,
+        valid_col=valid_col,
+    )
+    idx_tile = alloc_tile_buffer(
+        index_dtype,
+        [rows, cols],
+        space="VEC",
+        addr=idx_addr,
+        valid_shape=type_valid_shape,
+        valid_row=valid_row,
+        valid_col=valid_col,
+    )
+    out_tile = alloc_tile_buffer(
+        dtype,
+        [rows, cols],
+        space="VEC",
+        addr=out_addr,
+        valid_shape=type_valid_shape,
+        valid_row=valid_row,
+        valid_col=valid_col,
+    )
     load_view(src_view, src_tile)
     load_view(indices_view, idx_tile)
 
@@ -66,26 +103,60 @@ def tgather(
     for row in range_constexpr(rows):
         row_base = row * cols
         for col in range_constexpr(0, cols, lanes):
-            active = builtins.min(lanes, cols - col)
+            active = matrix_active_lanes(valid_row, valid_col, row, col, lanes)
             offset = s.const(row_base + col)
             mask = mask_for_chunk(dtype, active)
             idx_vec = pto.vlds(index_vector_type, idx_ptr, raw(offset))
-            out_vec = pto.vgather2(vector_type, src_ptr, idx_vec, raw(s.const(active)))
+            if isinstance(active, int):
+                active_lanes = raw(s.const(active))
+            else:
+                active_lanes = arith.IndexCastOp(IndexType.get(), raw(active)).result
+            out_vec = pto.vgather2(vector_type, src_ptr, idx_vec, active_lanes)
             pto.vsts(out_vec, out_ptr, raw(offset), mask)
 
     store_view(out_tile, out_view)
     return out_view
 
 
-def tmrgsort(src_view, out_view, *, dtype, shape, block_len, base_addr=0):
-    _, cols = check_mrgsort_operands(
-        src_view, out_view, dtype=dtype, shape=shape, block_len=block_len
+def tmrgsort(
+    src_view,
+    out_view,
+    *,
+    dtype,
+    tile_shape=None,
+    shape=None,
+    valid_row=None,
+    valid_col=None,
+    valid_shape=None,
+    block_len,
+    base_addr=0,
+):
+    rows, cols, valid_row, valid_col, type_valid_shape = resolve_tile_spec(
+        tile_shape=tile_shape,
+        shape=shape,
+        valid_row=valid_row,
+        valid_col=valid_col,
+        valid_shape=valid_shape,
+        context="TMRGSORT",
     )
+    _, cols = check_mrgsort_operands(
+        src_view, out_view, dtype=dtype, shape=[rows, cols], block_len=block_len
+    )
+    if (
+        not isinstance(valid_row, int)
+        or not isinstance(valid_col, int)
+        or valid_row != rows
+        or valid_col != cols
+        or type_valid_shape != [rows, cols]
+    ):
+        raise ValueError(
+            "TMRGSORT micro lowering currently requires a fully valid single-row tile."
+        )
     src_addr = const_i64(base_addr)
     out_addr = const_i64(base_addr + cols * dtype_byte_width(dtype))
 
-    src_tile = alloc_tile_buffer(dtype, shape, space="VEC", addr=src_addr)
-    out_tile = alloc_tile_buffer(dtype, shape, space="VEC", addr=out_addr)
+    src_tile = alloc_tile_buffer(dtype, [rows, cols], space="VEC", addr=src_addr)
+    out_tile = alloc_tile_buffer(dtype, [rows, cols], space="VEC", addr=out_addr)
     load_view(src_view, src_tile)
 
     ptr_type = ptr(dtype, space="VEC")
@@ -118,10 +189,40 @@ def tmrgsort(src_view, out_view, *, dtype, shape, block_len, base_addr=0):
     return out_view
 
 
-def tsort32(src_view, idx_view, out_view, *, dtype, shape, base_addr=0):
-    rows, cols, out_cols = check_sort32_operands(
-        src_view, idx_view, out_view, dtype=dtype, shape=shape
+def tsort32(
+    src_view,
+    idx_view,
+    out_view,
+    *,
+    dtype,
+    tile_shape=None,
+    shape=None,
+    valid_row=None,
+    valid_col=None,
+    valid_shape=None,
+    base_addr=0,
+):
+    rows, cols, valid_row, valid_col, type_valid_shape = resolve_tile_spec(
+        tile_shape=tile_shape,
+        shape=shape,
+        valid_row=valid_row,
+        valid_col=valid_col,
+        valid_shape=valid_shape,
+        context="TSORT32",
     )
+    rows, cols, out_cols = check_sort32_operands(
+        src_view, idx_view, out_view, dtype=dtype, shape=[rows, cols]
+    )
+    if (
+        not isinstance(valid_row, int)
+        or not isinstance(valid_col, int)
+        or valid_row != rows
+        or valid_col != cols
+        or type_valid_shape != [rows, cols]
+    ):
+        raise ValueError(
+            "TSORT32 micro lowering currently requires a fully valid input tile."
+        )
     src_bytes = rows * cols * dtype_byte_width(dtype)
     idx_bytes = rows * cols * 4
 
