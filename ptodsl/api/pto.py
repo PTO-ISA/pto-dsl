@@ -21,6 +21,7 @@ from .type_def import (
     TensorType,
     TileBufConfig,
     TileBufType,
+    ptr,
     __getattr__,
 )
 
@@ -34,6 +35,7 @@ __all__ = [
     "int16",
     "int32",
     "PtrType",
+    "ptr",
     "TensorType",
     "SubTensorType",
     "TileBufConfig",

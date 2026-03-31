@@ -39,230 +39,87 @@ module {
       %15 = pto.castptr %c0_i64 : i64 -> !pto.ptr<f32, ub>
       %16 = pto.castptr %c4096_i64 : i64 -> !pto.ptr<f32, ub>
       %17 = pto.castptr %c8192_i64 : i64 -> !pto.ptr<f32, ub>
-      %c32_i32 = arith.constant 32 : i32
-      %mask, %scalar_out = pto.plt_b32 %c32_i32 : i32 -> !pto.mask, i32
-      %c0_12 = arith.constant 0 : index
-      %18 = pto.vlds %15[%c0_12] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %19 = pto.vlds %16[%c0_12] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %20 = pto.vadd %18, %19, %mask : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %20, %17[%c0_12], %mask : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_13 = arith.constant 32 : i32
-      %mask_14, %scalar_out_15 = pto.plt_b32 %c32_i32_13 : i32 -> !pto.mask, i32
-      %c32_16 = arith.constant 32 : index
-      %21 = pto.vlds %15[%c32_16] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %22 = pto.vlds %16[%c32_16] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %23 = pto.vadd %21, %22, %mask_14 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %23, %17[%c32_16], %mask_14 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_17 = arith.constant 32 : i32
-      %mask_18, %scalar_out_19 = pto.plt_b32 %c32_i32_17 : i32 -> !pto.mask, i32
       %c64 = arith.constant 64 : index
-      %24 = pto.vlds %15[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %25 = pto.vlds %16[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %26 = pto.vadd %24, %25, %mask_18 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %26, %17[%c64], %mask_18 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_20 = arith.constant 32 : i32
-      %mask_21, %scalar_out_22 = pto.plt_b32 %c32_i32_20 : i32 -> !pto.mask, i32
-      %c96 = arith.constant 96 : index
-      %27 = pto.vlds %15[%c96] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %28 = pto.vlds %16[%c96] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %29 = pto.vadd %27, %28, %mask_21 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %29, %17[%c96], %mask_21 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_23 = arith.constant 32 : i32
-      %mask_24, %scalar_out_25 = pto.plt_b32 %c32_i32_23 : i32 -> !pto.mask, i32
-      %c128 = arith.constant 128 : index
-      %30 = pto.vlds %15[%c128] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %31 = pto.vlds %16[%c128] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %32 = pto.vadd %30, %31, %mask_24 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %32, %17[%c128], %mask_24 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_26 = arith.constant 32 : i32
-      %mask_27, %scalar_out_28 = pto.plt_b32 %c32_i32_26 : i32 -> !pto.mask, i32
-      %c160 = arith.constant 160 : index
-      %33 = pto.vlds %15[%c160] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %34 = pto.vlds %16[%c160] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %35 = pto.vadd %33, %34, %mask_27 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %35, %17[%c160], %mask_27 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_29 = arith.constant 32 : i32
-      %mask_30, %scalar_out_31 = pto.plt_b32 %c32_i32_29 : i32 -> !pto.mask, i32
-      %c192 = arith.constant 192 : index
-      %36 = pto.vlds %15[%c192] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %37 = pto.vlds %16[%c192] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %38 = pto.vadd %36, %37, %mask_30 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %38, %17[%c192], %mask_30 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_32 = arith.constant 32 : i32
-      %mask_33, %scalar_out_34 = pto.plt_b32 %c32_i32_32 : i32 -> !pto.mask, i32
-      %c224 = arith.constant 224 : index
-      %39 = pto.vlds %15[%c224] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %40 = pto.vlds %16[%c224] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %41 = pto.vadd %39, %40, %mask_33 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %41, %17[%c224], %mask_33 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_35 = arith.constant 32 : i32
-      %mask_36, %scalar_out_37 = pto.plt_b32 %c32_i32_35 : i32 -> !pto.mask, i32
-      %c256 = arith.constant 256 : index
-      %42 = pto.vlds %15[%c256] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %43 = pto.vlds %16[%c256] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %44 = pto.vadd %42, %43, %mask_36 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %44, %17[%c256], %mask_36 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_38 = arith.constant 32 : i32
-      %mask_39, %scalar_out_40 = pto.plt_b32 %c32_i32_38 : i32 -> !pto.mask, i32
-      %c288 = arith.constant 288 : index
-      %45 = pto.vlds %15[%c288] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %46 = pto.vlds %16[%c288] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %47 = pto.vadd %45, %46, %mask_39 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %47, %17[%c288], %mask_39 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_41 = arith.constant 32 : i32
-      %mask_42, %scalar_out_43 = pto.plt_b32 %c32_i32_41 : i32 -> !pto.mask, i32
-      %c320 = arith.constant 320 : index
-      %48 = pto.vlds %15[%c320] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %49 = pto.vlds %16[%c320] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %50 = pto.vadd %48, %49, %mask_42 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %50, %17[%c320], %mask_42 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_44 = arith.constant 32 : i32
-      %mask_45, %scalar_out_46 = pto.plt_b32 %c32_i32_44 : i32 -> !pto.mask, i32
-      %c352 = arith.constant 352 : index
-      %51 = pto.vlds %15[%c352] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %52 = pto.vlds %16[%c352] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %53 = pto.vadd %51, %52, %mask_45 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %53, %17[%c352], %mask_45 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_47 = arith.constant 32 : i32
-      %mask_48, %scalar_out_49 = pto.plt_b32 %c32_i32_47 : i32 -> !pto.mask, i32
-      %c384 = arith.constant 384 : index
-      %54 = pto.vlds %15[%c384] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %55 = pto.vlds %16[%c384] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %56 = pto.vadd %54, %55, %mask_48 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %56, %17[%c384], %mask_48 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_50 = arith.constant 32 : i32
-      %mask_51, %scalar_out_52 = pto.plt_b32 %c32_i32_50 : i32 -> !pto.mask, i32
-      %c416 = arith.constant 416 : index
-      %57 = pto.vlds %15[%c416] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %58 = pto.vlds %16[%c416] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %59 = pto.vadd %57, %58, %mask_51 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %59, %17[%c416], %mask_51 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_53 = arith.constant 32 : i32
-      %mask_54, %scalar_out_55 = pto.plt_b32 %c32_i32_53 : i32 -> !pto.mask, i32
-      %c448 = arith.constant 448 : index
-      %60 = pto.vlds %15[%c448] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %61 = pto.vlds %16[%c448] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %62 = pto.vadd %60, %61, %mask_54 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %62, %17[%c448], %mask_54 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_56 = arith.constant 32 : i32
-      %mask_57, %scalar_out_58 = pto.plt_b32 %c32_i32_56 : i32 -> !pto.mask, i32
-      %c480 = arith.constant 480 : index
-      %63 = pto.vlds %15[%c480] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %64 = pto.vlds %16[%c480] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %65 = pto.vadd %63, %64, %mask_57 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %65, %17[%c480], %mask_57 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_59 = arith.constant 32 : i32
-      %mask_60, %scalar_out_61 = pto.plt_b32 %c32_i32_59 : i32 -> !pto.mask, i32
-      %c512 = arith.constant 512 : index
-      %66 = pto.vlds %15[%c512] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %67 = pto.vlds %16[%c512] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %68 = pto.vadd %66, %67, %mask_60 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %68, %17[%c512], %mask_60 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_62 = arith.constant 32 : i32
-      %mask_63, %scalar_out_64 = pto.plt_b32 %c32_i32_62 : i32 -> !pto.mask, i32
-      %c544 = arith.constant 544 : index
-      %69 = pto.vlds %15[%c544] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %70 = pto.vlds %16[%c544] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %71 = pto.vadd %69, %70, %mask_63 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %71, %17[%c544], %mask_63 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_65 = arith.constant 32 : i32
-      %mask_66, %scalar_out_67 = pto.plt_b32 %c32_i32_65 : i32 -> !pto.mask, i32
-      %c576 = arith.constant 576 : index
-      %72 = pto.vlds %15[%c576] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %73 = pto.vlds %16[%c576] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %74 = pto.vadd %72, %73, %mask_66 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %74, %17[%c576], %mask_66 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_68 = arith.constant 32 : i32
-      %mask_69, %scalar_out_70 = pto.plt_b32 %c32_i32_68 : i32 -> !pto.mask, i32
-      %c608 = arith.constant 608 : index
-      %75 = pto.vlds %15[%c608] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %76 = pto.vlds %16[%c608] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %77 = pto.vadd %75, %76, %mask_69 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %77, %17[%c608], %mask_69 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_71 = arith.constant 32 : i32
-      %mask_72, %scalar_out_73 = pto.plt_b32 %c32_i32_71 : i32 -> !pto.mask, i32
-      %c640 = arith.constant 640 : index
-      %78 = pto.vlds %15[%c640] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %79 = pto.vlds %16[%c640] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %80 = pto.vadd %78, %79, %mask_72 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %80, %17[%c640], %mask_72 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_74 = arith.constant 32 : i32
-      %mask_75, %scalar_out_76 = pto.plt_b32 %c32_i32_74 : i32 -> !pto.mask, i32
-      %c672 = arith.constant 672 : index
-      %81 = pto.vlds %15[%c672] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %82 = pto.vlds %16[%c672] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %83 = pto.vadd %81, %82, %mask_75 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %83, %17[%c672], %mask_75 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_77 = arith.constant 32 : i32
-      %mask_78, %scalar_out_79 = pto.plt_b32 %c32_i32_77 : i32 -> !pto.mask, i32
-      %c704 = arith.constant 704 : index
-      %84 = pto.vlds %15[%c704] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %85 = pto.vlds %16[%c704] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %86 = pto.vadd %84, %85, %mask_78 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %86, %17[%c704], %mask_78 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_80 = arith.constant 32 : i32
-      %mask_81, %scalar_out_82 = pto.plt_b32 %c32_i32_80 : i32 -> !pto.mask, i32
-      %c736 = arith.constant 736 : index
-      %87 = pto.vlds %15[%c736] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %88 = pto.vlds %16[%c736] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %89 = pto.vadd %87, %88, %mask_81 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %89, %17[%c736], %mask_81 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_83 = arith.constant 32 : i32
-      %mask_84, %scalar_out_85 = pto.plt_b32 %c32_i32_83 : i32 -> !pto.mask, i32
-      %c768 = arith.constant 768 : index
-      %90 = pto.vlds %15[%c768] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %91 = pto.vlds %16[%c768] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %92 = pto.vadd %90, %91, %mask_84 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %92, %17[%c768], %mask_84 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_86 = arith.constant 32 : i32
-      %mask_87, %scalar_out_88 = pto.plt_b32 %c32_i32_86 : i32 -> !pto.mask, i32
-      %c800 = arith.constant 800 : index
-      %93 = pto.vlds %15[%c800] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %94 = pto.vlds %16[%c800] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %95 = pto.vadd %93, %94, %mask_87 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %95, %17[%c800], %mask_87 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_89 = arith.constant 32 : i32
-      %mask_90, %scalar_out_91 = pto.plt_b32 %c32_i32_89 : i32 -> !pto.mask, i32
-      %c832 = arith.constant 832 : index
-      %96 = pto.vlds %15[%c832] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %97 = pto.vlds %16[%c832] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %98 = pto.vadd %96, %97, %mask_90 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %98, %17[%c832], %mask_90 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_92 = arith.constant 32 : i32
-      %mask_93, %scalar_out_94 = pto.plt_b32 %c32_i32_92 : i32 -> !pto.mask, i32
-      %c864 = arith.constant 864 : index
-      %99 = pto.vlds %15[%c864] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %100 = pto.vlds %16[%c864] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %101 = pto.vadd %99, %100, %mask_93 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %101, %17[%c864], %mask_93 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_95 = arith.constant 32 : i32
-      %mask_96, %scalar_out_97 = pto.plt_b32 %c32_i32_95 : i32 -> !pto.mask, i32
-      %c896 = arith.constant 896 : index
-      %102 = pto.vlds %15[%c896] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %103 = pto.vlds %16[%c896] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %104 = pto.vadd %102, %103, %mask_96 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %104, %17[%c896], %mask_96 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_98 = arith.constant 32 : i32
-      %mask_99, %scalar_out_100 = pto.plt_b32 %c32_i32_98 : i32 -> !pto.mask, i32
-      %c928 = arith.constant 928 : index
-      %105 = pto.vlds %15[%c928] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %106 = pto.vlds %16[%c928] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %107 = pto.vadd %105, %106, %mask_99 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %107, %17[%c928], %mask_99 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_101 = arith.constant 32 : i32
-      %mask_102, %scalar_out_103 = pto.plt_b32 %c32_i32_101 : i32 -> !pto.mask, i32
-      %c960 = arith.constant 960 : index
-      %108 = pto.vlds %15[%c960] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %109 = pto.vlds %16[%c960] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %110 = pto.vadd %108, %109, %mask_102 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %110, %17[%c960], %mask_102 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
-      %c32_i32_104 = arith.constant 32 : i32
-      %mask_105, %scalar_out_106 = pto.plt_b32 %c32_i32_104 : i32 -> !pto.mask, i32
-      %c992 = arith.constant 992 : index
-      %111 = pto.vlds %15[%c992] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %112 = pto.vlds %16[%c992] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>
-      %113 = pto.vadd %111, %112, %mask_105 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
-      pto.vsts %113, %17[%c992], %mask_105 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
+      %18 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result, %updated_source = pto.vlds_post %15[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_12, %updated_source_13 = pto.vlds_post %16[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %19 = pto.vadd %result, %result_12, %18 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %20 = pto.vsts_post %19, %17[%c64], %18 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %21 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_14, %updated_source_15 = pto.vlds_post %updated_source[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_16, %updated_source_17 = pto.vlds_post %updated_source_13[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %22 = pto.vadd %result_14, %result_16, %21 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %23 = pto.vsts_post %22, %20[%c64], %21 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %24 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_18, %updated_source_19 = pto.vlds_post %updated_source_15[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_20, %updated_source_21 = pto.vlds_post %updated_source_17[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %25 = pto.vadd %result_18, %result_20, %24 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %26 = pto.vsts_post %25, %23[%c64], %24 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %27 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_22, %updated_source_23 = pto.vlds_post %updated_source_19[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_24, %updated_source_25 = pto.vlds_post %updated_source_21[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %28 = pto.vadd %result_22, %result_24, %27 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %29 = pto.vsts_post %28, %26[%c64], %27 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %30 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_26, %updated_source_27 = pto.vlds_post %updated_source_23[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_28, %updated_source_29 = pto.vlds_post %updated_source_25[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %31 = pto.vadd %result_26, %result_28, %30 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %32 = pto.vsts_post %31, %29[%c64], %30 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %33 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_30, %updated_source_31 = pto.vlds_post %updated_source_27[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_32, %updated_source_33 = pto.vlds_post %updated_source_29[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %34 = pto.vadd %result_30, %result_32, %33 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %35 = pto.vsts_post %34, %32[%c64], %33 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %36 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_34, %updated_source_35 = pto.vlds_post %updated_source_31[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_36, %updated_source_37 = pto.vlds_post %updated_source_33[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %37 = pto.vadd %result_34, %result_36, %36 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %38 = pto.vsts_post %37, %35[%c64], %36 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %39 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_38, %updated_source_39 = pto.vlds_post %updated_source_35[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_40, %updated_source_41 = pto.vlds_post %updated_source_37[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %40 = pto.vadd %result_38, %result_40, %39 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %41 = pto.vsts_post %40, %38[%c64], %39 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %42 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_42, %updated_source_43 = pto.vlds_post %updated_source_39[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_44, %updated_source_45 = pto.vlds_post %updated_source_41[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %43 = pto.vadd %result_42, %result_44, %42 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %44 = pto.vsts_post %43, %41[%c64], %42 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %45 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_46, %updated_source_47 = pto.vlds_post %updated_source_43[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_48, %updated_source_49 = pto.vlds_post %updated_source_45[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %46 = pto.vadd %result_46, %result_48, %45 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %47 = pto.vsts_post %46, %44[%c64], %45 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %48 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_50, %updated_source_51 = pto.vlds_post %updated_source_47[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_52, %updated_source_53 = pto.vlds_post %updated_source_49[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %49 = pto.vadd %result_50, %result_52, %48 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %50 = pto.vsts_post %49, %47[%c64], %48 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %51 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_54, %updated_source_55 = pto.vlds_post %updated_source_51[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_56, %updated_source_57 = pto.vlds_post %updated_source_53[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %52 = pto.vadd %result_54, %result_56, %51 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %53 = pto.vsts_post %52, %50[%c64], %51 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %54 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_58, %updated_source_59 = pto.vlds_post %updated_source_55[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_60, %updated_source_61 = pto.vlds_post %updated_source_57[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %55 = pto.vadd %result_58, %result_60, %54 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %56 = pto.vsts_post %55, %53[%c64], %54 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %57 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_62, %updated_source_63 = pto.vlds_post %updated_source_59[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_64, %updated_source_65 = pto.vlds_post %updated_source_61[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %58 = pto.vadd %result_62, %result_64, %57 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %59 = pto.vsts_post %58, %56[%c64], %57 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %60 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_66, %updated_source_67 = pto.vlds_post %updated_source_63[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_68, %updated_source_69 = pto.vlds_post %updated_source_65[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %61 = pto.vadd %result_66, %result_68, %60 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %62 = pto.vsts_post %61, %59[%c64], %60 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
+      %63 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %result_70, %updated_source_71 = pto.vlds_post %updated_source_67[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %result_72, %updated_source_73 = pto.vlds_post %updated_source_69[%c64] : !pto.ptr<f32, ub> -> !pto.vreg<64xf32>, !pto.ptr<f32, ub>
+      %64 = pto.vadd %result_70, %result_72, %63 : !pto.vreg<64xf32>, !pto.vreg<64xf32>, !pto.mask -> !pto.vreg<64xf32>
+      %65 = pto.vsts_post %64, %62[%c64], %63 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask -> !pto.ptr<f32, ub>
       pto.tstore ins(%14 : !pto.tile_buf<vec, 32x32xf32>) outs(%11 : !pto.partition_tensor_view<32x32xf32>)
     }
     return

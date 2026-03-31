@@ -1,8 +1,11 @@
-from . import native, ops, tbinary, texpand, treduce, tsort, tunary
+from . import native, ops, tbinary, texpand, treduce, tscalar, tsort, tunary
+from .a5_header_coverage import A5_HEADER_COVERAGE, a5_header_coverage_markdown
 from .kernels import (
+    HIVM_LLVM_KERNELS,
     KERNEL_BUILDERS,
     build_cube_matmul,
     build_elementwise_add,
+    build_hivm_vadd_demo,
     build_mxfp8_matmul,
     build_templated_elementwise_add,
     build_vector_copy,
@@ -15,10 +18,14 @@ from .tile_micro_coverage import (
 )
 
 __all__ = list(ops.__all__) + [
+    "A5_HEADER_COVERAGE",
+    "HIVM_LLVM_KERNELS",
     "KERNEL_BUILDERS",
     "TILE_MICRO_COVERAGE",
+    "a5_header_coverage_markdown",
     "build_cube_matmul",
     "build_elementwise_add",
+    "build_hivm_vadd_demo",
     "build_mxfp8_matmul",
     "build_templated_elementwise_add",
     "build_vector_copy",
@@ -28,6 +35,7 @@ __all__ = list(ops.__all__) + [
     "tbinary",
     "texpand",
     "treduce",
+    "tscalar",
     "tsort",
     "tunary",
 ]

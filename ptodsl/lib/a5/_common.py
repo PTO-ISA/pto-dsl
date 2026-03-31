@@ -4,7 +4,7 @@ import builtins
 import re
 
 from mlir.dialects import arith, pto
-from mlir.ir import IntegerAttr, IntegerType
+from mlir.ir import IndexType, IntegerAttr, IntegerType
 
 from ... import const_expr, language as dsl, range_constexpr, scalar as s
 from ...api.scalar import _unwrap
@@ -27,6 +27,17 @@ _DTYPE_ALIAS_GROUPS = {
     "i8": {"i8", "int8"},
 }
 
+_ADDRESS_SPACE_BY_NAME = {
+    "ACC": pto.AddressSpace.ACC,
+    "BIAS": pto.AddressSpace.BIAS,
+    "GM": pto.AddressSpace.GM,
+    "LEFT": pto.AddressSpace.LEFT,
+    "MAT": pto.AddressSpace.MAT,
+    "RIGHT": pto.AddressSpace.RIGHT,
+    "SCALING": pto.AddressSpace.SCALING,
+    "VEC": pto.AddressSpace.VEC,
+}
+
 
 def _call(op, *args, **kwargs):
     return op(
@@ -40,7 +51,10 @@ def raw(value):
 
 
 def _space_enum(space):
-    return getattr(pto.AddressSpace, str(space).upper())
+    normalized = str(space).upper()
+    if normalized not in _ADDRESS_SPACE_BY_NAME:
+        raise ValueError(f"Unsupported address space '{space}'.")
+    return _ADDRESS_SPACE_BY_NAME[normalized]
 
 
 def ptr(dtype, *, space="GM"):
@@ -73,8 +87,19 @@ def const_i32(value):
     return arith.ConstantOp(i32, IntegerAttr.get(i32, value)).result
 
 
+def const_index(value):
+    return arith.ConstantOp(IndexType.get(), value).result
+
+
 def const_float(dtype, value):
     return arith.ConstantOp(dtype, value).result
+
+
+def const_scalar(dtype, value):
+    token = dtype_token(dtype)
+    if token.startswith("f") or token == "bf16":
+        return arith.ConstantOp(dtype, float(value)).result
+    return arith.ConstantOp(dtype, int(value)).result
 
 
 def row_major_strides(shape):
@@ -89,6 +114,26 @@ def row_major_strides(shape):
 
 def _index_value(value):
     return s.const(value) if isinstance(value, int) else value
+
+
+def _to_index(value):
+    if isinstance(value, int):
+        return const_index(value)
+    value = _unwrap(value)
+    value_type = value.type if hasattr(value, "type") else ""
+    if str(value_type) == "index":
+        return value
+    return arith.IndexCastOp(IndexType.get(), value).result
+
+
+def _to_i32(value):
+    if isinstance(value, int):
+        return const_i32(value)
+    value = _unwrap(value)
+    value_type = value.type if hasattr(value, "type") else ""
+    if str(value_type) == "index":
+        return arith.IndexCastOp(IntegerType.get_signless(32), value).result
+    return value
 
 
 def make_tensor(ptr_value, *, shape, dtype):
@@ -113,7 +158,7 @@ def slice_tensor(source, *, offsets, sizes, dtype):
 
 def alloc_tile_buffer(
     dtype,
-    shape,
+    tile_shape,
     *,
     space="VEC",
     valid_shape=None,
@@ -122,20 +167,32 @@ def alloc_tile_buffer(
     valid_row=None,
     valid_col=None,
 ):
+    if valid_shape is None:
+        valid_shape = list(tile_shape)
     tile_type = dsl.TileBufType(
-        shape=shape,
+        shape=tile_shape,
         dtype=dtype,
         memory_space=space,
         valid_shape=valid_shape,
         config=config,
     )
     kwargs = {}
+    row_is_dynamic = (
+        isinstance(valid_shape, (list, tuple))
+        and len(valid_shape) > 0
+        and valid_shape[0] == -1
+    )
+    col_is_dynamic = (
+        isinstance(valid_shape, (list, tuple))
+        and len(valid_shape) > 1
+        and valid_shape[1] == -1
+    )
     if addr is not None:
         kwargs["addr"] = _unwrap(addr)
-    if valid_row is not None:
-        kwargs["valid_row"] = _unwrap(valid_row)
-    if valid_col is not None:
-        kwargs["valid_col"] = _unwrap(valid_col)
+    if valid_row is not None and row_is_dynamic:
+        kwargs["valid_row"] = _to_index(valid_row)
+    if valid_col is not None and col_is_dynamic:
+        kwargs["valid_col"] = _to_index(valid_col)
     return pto.AllocTileOp(tile_type, **kwargs).result
 
 
@@ -159,22 +216,29 @@ def load_tile(
     tile_buffer=None,
     *,
     dtype=None,
+    tile_shape=None,
     shape=None,
     space="VEC",
     valid_shape=None,
     config=None,
+    valid_row=None,
+    valid_col=None,
 ):
     if tile_buffer is None:
-        if dtype is None or shape is None:
+        if tile_shape is None:
+            tile_shape = shape
+        if dtype is None or tile_shape is None:
             raise ValueError(
-                "`load_tile(...)` requires either `tile_buffer=` or both `dtype=` and `shape=`."
+                "`load_tile(...)` requires either `tile_buffer=` or both `dtype=` and `tile_shape=`."
             )
         tile_buffer = alloc_tile_buffer(
             dtype,
-            shape,
+            tile_shape,
             space=space,
             valid_shape=valid_shape,
             config=config,
+            valid_row=valid_row,
+            valid_col=valid_col,
         )
     load_view(view, tile_buffer)
     return tile_buffer
@@ -214,7 +278,7 @@ def resolve_lanes(dtype, lanes):
 
 def extract_static_tensor_shape(value):
     raw = _unwrap(value)
-    type_obj = getattr(raw, "type", None)
+    type_obj = raw.type if hasattr(raw, "type") else None
     if type_obj is None:
         return None
     text = str(type_obj)
@@ -238,7 +302,7 @@ def extract_static_tensor_shape(value):
 
 def extract_tensor_dtype_token(value):
     raw = _unwrap(value)
-    type_obj = getattr(raw, "type", None)
+    type_obj = raw.type if hasattr(raw, "type") else None
     if type_obj is None:
         return None
     text = str(type_obj).lower()
@@ -283,6 +347,32 @@ def require_static_matrix_shape(shape, *, context):
     return rows, cols
 
 
+def resolve_tile_spec(
+    *,
+    tile_shape=None,
+    shape=None,
+    valid_row=None,
+    valid_col=None,
+    valid_shape=None,
+    context,
+):
+    if tile_shape is None:
+        tile_shape = shape
+    if tile_shape is None:
+        raise ValueError(f"{context} requires `tile_shape=`.")
+    rows, cols = require_static_matrix_shape(tile_shape, context=context)
+    if valid_row is None:
+        valid_row = rows
+    if valid_col is None:
+        valid_col = cols
+    if valid_shape is None:
+        valid_shape = [
+            valid_row if isinstance(valid_row, int) else -1,
+            valid_col if isinstance(valid_col, int) else -1,
+        ]
+    return rows, cols, valid_row, valid_col, valid_shape
+
+
 def full_mask(dtype):
     width = dtype_byte_width(dtype)
     if width == 4:
@@ -296,7 +386,7 @@ def full_mask(dtype):
 
 def tail_mask(dtype, active_lanes):
     i32 = IntegerType.get_signless(32)
-    active = const_i32(active_lanes)
+    active = _to_i32(active_lanes)
     width = dtype_byte_width(dtype)
     if width == 4:
         mask, _ = pto.plt_b32(mask_type(), i32, active)
@@ -312,9 +402,49 @@ def tail_mask(dtype, active_lanes):
 
 def mask_for_chunk(dtype, active_lanes):
     lanes = micro_lane_count(dtype)
-    if active_lanes == lanes:
+    if isinstance(active_lanes, int) and active_lanes == lanes:
         return full_mask(dtype)
     return tail_mask(dtype, active_lanes)
+
+
+def clamp_active_lanes(active_lanes, lanes):
+    if isinstance(active_lanes, int):
+        return max(0, min(active_lanes, lanes))
+    active_i32 = _to_i32(active_lanes)
+    zero = const_i32(0)
+    lanes_i32 = const_i32(lanes)
+    is_positive = arith.CmpIOp(arith.CmpIPredicate.sgt, active_i32, zero).result
+    nonnegative = arith.SelectOp(is_positive, active_i32, zero).result
+    fits = arith.CmpIOp(arith.CmpIPredicate.slt, nonnegative, lanes_i32).result
+    return arith.SelectOp(fits, nonnegative, lanes_i32).result
+
+
+def flat_active_lanes(valid_row, valid_col, offset, lanes):
+    if isinstance(valid_row, int) and isinstance(valid_col, int):
+        return clamp_active_lanes(valid_row * valid_col - offset, lanes)
+    total = arith.MulIOp(_to_index(valid_row), _to_index(valid_col)).result
+    remaining = arith.SubIOp(total, const_index(offset)).result
+    return clamp_active_lanes(remaining, lanes)
+
+
+def matrix_active_lanes(valid_row, valid_col, row, col, lanes):
+    if (
+        isinstance(valid_row, int)
+        and isinstance(valid_col, int)
+        and isinstance(row, int)
+        and isinstance(col, int)
+    ):
+        if row >= valid_row:
+            return 0
+        return clamp_active_lanes(valid_col - col, lanes)
+
+    valid_col_idx = _to_index(valid_col)
+    remaining = arith.SubIOp(valid_col_idx, const_index(col)).result
+    active = clamp_active_lanes(remaining, lanes)
+    row_valid = arith.CmpIOp(
+        arith.CmpIPredicate.slt, const_index(row), _to_index(valid_row)
+    ).result
+    return arith.SelectOp(row_valid, _to_i32(active), const_i32(0)).result
 
 
 def onept_dist(dtype):
@@ -351,6 +481,28 @@ def normalize_vf_impl_kind(impl):
             f"Unsupported VF impl kind '{impl}'. Expected one of: {supported}."
         )
     return aliases[normalized]
+
+
+def check_tscalar_operands(src_view, out_view, *, dtype, shape, context, allowed=None):
+    rows, cols = require_static_matrix_shape(shape, context=context)
+    require_supported_dtype(
+        dtype,
+        allowed=allowed
+        or {"f32", "f16", "bf16", "i32", "u32", "i16", "u16", "i8", "u8"},
+        message=f"Fix: {context} has invalid data type.",
+    )
+    for view, label in ((src_view, "src"), (out_view, "dst")):
+        require_view_shape(
+            view,
+            [rows, cols],
+            message=f"Fix: {context} input tile {label} valid shape mismatch.",
+        )
+        require_view_dtype(
+            view,
+            dtype,
+            message=f"Fix: {context} input and output tile data type mismatch.",
+        )
+    return rows, cols
 
 
 def check_tbinop_operands(lhs_view, rhs_view, out_view, *, dtype, shape, context):
@@ -591,6 +743,7 @@ __all__ = [
     "_call",
     "align_type",
     "alloc_tile_buffer",
+    "clamp_active_lanes",
     "check_col_expand_operands",
     "check_col_reduce_operands",
     "check_gather_operands",
@@ -598,17 +751,22 @@ __all__ = [
     "check_row_expand_operands",
     "check_row_reduce_operands",
     "check_sort32_operands",
+    "check_tscalar_operands",
     "check_tbinop_operands",
     "const_expr",
     "const_float",
+    "const_scalar",
+    "const_index",
     "const_i32",
     "const_i64",
     "dtype_byte_width",
     "dtype_token",
+    "flat_active_lanes",
     "full_mask",
     "load_tile",
     "load_view",
     "make_tensor",
+    "matrix_active_lanes",
     "mask_for_chunk",
     "mask_type",
     "micro_lane_count",
@@ -617,6 +775,7 @@ __all__ = [
     "onept_dist",
     "ptr",
     "range_constexpr",
+    "resolve_tile_spec",
     "resolve_lanes",
     "s",
     "slice_tensor",

@@ -2,24 +2,42 @@ from mlir.dialects import pto as raw_pto
 from mlir.ir import IndexType
 
 from ... import Constexpr, language as dsl, scalar as s, to_ir_module
+from ...api.scalar import _unwrap
 from ...language import make_mxfp8
 from ._common import (
     VF_IMPL_DEFAULT,
     alloc_tile_buffer,
     load_tile,
+    mask_type,
     make_tensor,
     ptr,
     slice_tensor,
     store_tile,
+    vreg_type,
 )
 from . import ops
+
+_DSL_DTYPE_BY_NAME = {
+    "float32": lambda: dsl.float32,
+    "float16": lambda: dsl.float16,
+    "bfloat16": lambda: dsl.bfloat16,
+    "int32": lambda: dsl.int32,
+    "int16": lambda: dsl.int16,
+    "int8": lambda: dsl.int8,
+    "uint32": lambda: dsl.uint32,
+    "uint16": lambda: dsl.uint16,
+    "uint8": lambda: dsl.uint8,
+    "bool": lambda: dsl.bool,
+}
 
 
 def _resolve_dtype(dtype, default_name):
     if dtype is None:
-        return getattr(dsl, default_name)
+        return _DSL_DTYPE_BY_NAME[default_name]()
     if isinstance(dtype, str):
-        return getattr(dsl, dtype)
+        if dtype not in _DSL_DTYPE_BY_NAME:
+            raise ValueError(f"Unsupported PTODSL dtype '{dtype}'.")
+        return _DSL_DTYPE_BY_NAME[dtype]()
     return dtype
 
 
@@ -69,7 +87,7 @@ def build_elementwise_add(*, rows=32, cols=32, tile_rows=32, tile_cols=32, dtype
                 rhs_tile,
                 out_tile,
                 dtype=element_dtype,
-                shape=[tile_rows, tile_cols],
+                tile_shape=[tile_rows, tile_cols],
             )
 
     return a5_elementwise_add
@@ -106,7 +124,7 @@ def build_templated_elementwise_add(*, dtype=None):
                     slice_tensor(rhs, offsets=[0, 0], sizes=shape, dtype=element_dtype),
                     slice_tensor(out, offsets=[0, 0], sizes=shape, dtype=element_dtype),
                     dtype=element_dtype,
-                    shape=shape,
+                    tile_shape=shape,
                     impl=VF_IMPL,
                 )
 
@@ -126,10 +144,32 @@ def build_vector_copy(*, lanes=64, dtype=None):
     @to_ir_module(meta_data=meta_data)
     def a5_vector_copy(src: "ptr_t", dst: "ptr_t", offset: "index_t") -> None:
         element_dtype = _resolve_dtype(dtype, "float32")
-        with dsl.vector_section():
-            ops.vector_copy(src, dst, offset, lanes=lanes, dtype=element_dtype)
+        ops.vector_copy(src, dst, offset, lanes=lanes, dtype=element_dtype)
 
     return a5_vector_copy
+
+
+def build_hivm_vadd_demo(*, lanes=64, dtype=None):
+    def meta_data():
+        element_dtype = _resolve_dtype(dtype, "float32")
+        return {
+            "ptr_t": ptr(element_dtype, space="VEC"),
+            "index_t": IndexType.get(),
+        }
+
+    @to_ir_module(meta_data=meta_data)
+    def a5_hivm_vadd_demo(
+        src0: "ptr_t", src1: "ptr_t", dst: "ptr_t", offset: "index_t"
+    ) -> None:
+        element_dtype = _resolve_dtype(dtype, "float32")
+        vector_type = vreg_type(lanes, element_dtype)
+        mask = raw_pto.pset_b32(mask_type(), "PAT_ALL")
+        lhs = raw_pto.vlds(vector_type, _unwrap(src0), _unwrap(offset))
+        rhs = raw_pto.vlds(vector_type, _unwrap(src1), _unwrap(offset))
+        out = raw_pto.vadd(vector_type, lhs, rhs, mask)
+        raw_pto.vsts(out, _unwrap(dst), _unwrap(offset), mask)
+
+    return a5_hivm_vadd_demo
 
 
 def build_mxfp8_matmul(*, m=16, k=64, n=32, lhs_variant="e5m2", rhs_variant="e5m2"):
@@ -259,7 +299,7 @@ def build_cube_matmul(
                     lhs, offsets=[0, 0], sizes=[m, k], dtype=lhs_element_dtype
                 ),
                 dtype=lhs_element_dtype,
-                shape=[m, k],
+                tile_shape=[m, k],
                 space="MAT",
             )
             rhs_mat = load_tile(
@@ -267,7 +307,7 @@ def build_cube_matmul(
                     rhs, offsets=[0, 0], sizes=[k, n], dtype=rhs_element_dtype
                 ),
                 dtype=rhs_element_dtype,
-                shape=[k, n],
+                tile_shape=[k, n],
                 space="MAT",
             )
             lhs_tile = alloc_tile_buffer(lhs_element_dtype, [m, k], space="LEFT")
@@ -288,15 +328,23 @@ def build_cube_matmul(
 
 KERNEL_BUILDERS = {
     "a5_elementwise_add": build_elementwise_add,
+    "a5_hivm_vadd_demo": build_hivm_vadd_demo,
     "a5_vector_copy": build_vector_copy,
     "a5_cube_matmul": build_cube_matmul,
+}
+
+HIVM_LLVM_KERNELS = {
+    "a5_hivm_vadd_demo",
+    "a5_vector_copy",
 }
 
 
 __all__ = [
     "KERNEL_BUILDERS",
+    "HIVM_LLVM_KERNELS",
     "build_cube_matmul",
     "build_elementwise_add",
+    "build_hivm_vadd_demo",
     "build_vector_copy",
     "build_mxfp8_matmul",
     "build_templated_elementwise_add",

@@ -8,15 +8,9 @@ from ._common import (
     VF_IMPL_DEFAULT,
 )
 from .native import (
-    adds,
-    and_,
-    col_expand_max,
-    col_expand_min,
-    col_expand_mul,
     col_prod,
     compare,
     concat,
-    divs,
     extract,
     full_mask_b32,
     insert,
@@ -27,32 +21,43 @@ from .native import (
     matmul_mx,
     matmul_mx_acc,
     matmul_mx_bias,
-    max,
-    maxs,
-    min,
-    mins,
     move_tile,
-    muls,
     row_prod,
     scatter,
     select,
-    shl,
-    shls,
-    shr,
-    shrs,
     store_tile,
-    subs,
     trans,
     vector_copy,
     vload,
     vstore,
-    xor,
 )
-from .tbinary import tadd, tdiv, tmov, tmul, tor_, tsub
+from .tbinary import (
+    tand,
+    tadd,
+    tdiv,
+    tmax,
+    tmin,
+    tmov,
+    tmul,
+    tor_,
+    tshl,
+    tshr,
+    tsub,
+    txor,
+)
 from .texpand import (
     tcol_expand,
+    tcol_expand_add,
+    tcol_expand_div,
+    tcol_expand_max,
+    tcol_expand_min,
+    tcol_expand_mul,
+    tcol_expand_sub,
     trow_expand,
+    trow_expand_add,
     trow_expand_div,
+    trow_expand_max,
+    trow_expand_min,
     trow_expand_mul,
     trow_expand_sub,
 )
@@ -64,69 +69,62 @@ from .treduce import (
     trow_min,
     trow_sum,
 )
+from .tscalar import (
+    taxpy,
+    tadds,
+    tands,
+    tdivs,
+    tlrelu,
+    tmaxs,
+    tmins,
+    tmuls,
+    tors,
+    tshls,
+    tshrs,
+    tsubs,
+    txors,
+)
 from .tsort import tgather, tmrgsort, tsort32
 from .tunary import tabs, texp, tlog, trecip, trelu, trsqrt, tsqrt
-
-# Readable aliases that match the public tile op names.
-mov = tmov
-add = tadd
-sub = tsub
-mul = tmul
-div = tdiv
-or_ = tor_
-gather = tgather
-exp = texp
-log = tlog
-relu = trelu
-abs = tabs
-sqrt = tsqrt
-rsqrt = trsqrt
-reciprocal = trecip
-row_sum = trow_sum
-row_min = trow_min
-row_max = trow_max
-row_expand = trow_expand
-row_expand_sub = trow_expand_sub
-row_expand_mul = trow_expand_mul
-row_expand_div = trow_expand_div
-col_sum = tcol_sum
-col_min = tcol_min
-col_max = tcol_max
-col_expand = tcol_expand
-mrgsort = tmrgsort
-sort32 = tsort32
 
 # A5-style aliases.
 TLoad = load_tile
 TStore = store_tile
 TMov = tmov
 TAdd = tadd
-TAddS = adds
+TAddS = tadds
 TSub = tsub
-TSubS = subs
+TSubS = tsubs
 TMul = tmul
-TMulS = muls
+TMulS = tmuls
 TDiv = tdiv
-TDivS = divs
-TMax = max
-TMaxS = maxs
-TMin = min
-TMinS = mins
-TAnd = and_
+TDivS = tdivs
+TMax = tmax
+TMaxS = tmaxs
+TMaxs = tmaxs
+TMin = tmin
+TMinS = tmins
+TMins = tmins
+TAnd = tand
+TAndS = tands
 TOr = tor_
-TXor = xor
-TShl = shl
-TShlS = shls
-TShr = shr
-TShrS = shrs
+TOrS = tors
+TXor = txor
+TXorS = txors
+TShl = tshl
+TShlS = tshls
+TShr = tshr
+TShrS = tshrs
 TCmp = compare
 TExp = texp
 TLog = tlog
 TRelu = trelu
+TLRelu = tlrelu
 TAbs = tabs
 TSqrt = tsqrt
 TRsqrt = trsqrt
 TRecip = trecip
+TAxpy = taxpy
 TGather = tgather
 TScatter = scatter
 TSel = select
@@ -137,16 +135,22 @@ TRowSum = trow_sum
 TRowMin = trow_min
 TRowMax = trow_max
 TRowExpand = trow_expand
+TRowExpandAdd = trow_expand_add
 TRowExpandSub = trow_expand_sub
 TRowExpandMul = trow_expand_mul
 TRowExpandDiv = trow_expand_div
+TRowExpandMax = trow_expand_max
+TRowExpandMin = trow_expand_min
 TColSum = tcol_sum
 TColMin = tcol_min
 TColMax = tcol_max
 TColExpand = tcol_expand
-TColExpandMul = col_expand_mul
-TColExpandMax = col_expand_max
-TColExpandMin = col_expand_min
+TColExpandAdd = tcol_expand_add
+TColExpandSub = tcol_expand_sub
+TColExpandDiv = tcol_expand_div
+TColExpandMul = tcol_expand_mul
+TColExpandMax = tcol_expand_max
+TColExpandMin = tcol_expand_min
 TMrgSort = tmrgsort
 TSort32 = tsort32
 TTrans = trans
@@ -167,10 +171,15 @@ __all__ = [
     "TAdd",
     "TAddS",
     "TAnd",
+    "TAndS",
+    "TAxpy",
     "TColExpand",
+    "TColExpandAdd",
+    "TColExpandDiv",
     "TColExpandMax",
     "TColExpandMin",
     "TColExpandMul",
+    "TColExpandSub",
     "TColMax",
     "TColMin",
     "TColSum",
@@ -182,6 +191,7 @@ __all__ = [
     "TExtract",
     "TGather",
     "TInsert",
+    "TLRelu",
     "TLoad",
     "TLog",
     "TMatmul",
@@ -192,17 +202,23 @@ __all__ = [
     "TMatmulMxBias",
     "TMax",
     "TMaxS",
+    "TMaxs",
     "TMin",
     "TMinS",
+    "TMins",
     "TMov",
     "TMrgSort",
     "TMul",
     "TMulS",
     "TOr",
+    "TOrS",
     "TRecip",
     "TRelu",
     "TRowExpand",
+    "TRowExpandAdd",
     "TRowExpandDiv",
+    "TRowExpandMax",
+    "TRowExpandMin",
     "TRowExpandMul",
     "TRowExpandSub",
     "TRowMax",
@@ -222,96 +238,82 @@ __all__ = [
     "TSubS",
     "TTrans",
     "TXor",
-    "add",
-    "adds",
-    "and_",
-    "col_expand",
-    "col_expand_max",
-    "col_expand_min",
-    "col_expand_mul",
-    "col_max",
-    "col_min",
+    "TXorS",
     "col_prod",
-    "col_sum",
     "compare",
     "concat",
-    "div",
-    "divs",
-    "exp",
     "extract",
     "full_mask_b32",
-    "gather",
     "insert",
     "load_tile",
-    "log",
     "matmul",
     "matmul_acc",
     "matmul_bias",
     "matmul_mx",
     "matmul_mx_acc",
     "matmul_mx_bias",
-    "max",
-    "maxs",
-    "min",
-    "mins",
     "move_tile",
-    "mov",
-    "mrgsort",
-    "mul",
-    "muls",
-    "or_",
-    "reciprocal",
-    "relu",
-    "row_expand",
-    "row_expand_div",
-    "row_expand_mul",
-    "row_expand_sub",
-    "row_max",
-    "row_min",
     "row_prod",
-    "row_sum",
-    "rsqrt",
     "scatter",
     "select",
-    "shl",
-    "shls",
-    "shr",
-    "shrs",
-    "sort32",
-    "sqrt",
     "store_tile",
-    "sub",
-    "subs",
     "tabs",
     "tadd",
+    "tadds",
+    "tand",
+    "tands",
+    "taxpy",
     "tcol_expand",
+    "tcol_expand_add",
+    "tcol_expand_div",
+    "tcol_expand_max",
+    "tcol_expand_min",
+    "tcol_expand_mul",
+    "tcol_expand_sub",
     "tcol_max",
     "tcol_min",
     "tcol_sum",
     "tdiv",
+    "tdivs",
     "texp",
     "tgather",
+    "tlrelu",
     "tlog",
+    "tmax",
+    "tmaxs",
+    "tmin",
+    "tmins",
     "tmov",
     "tmrgsort",
     "tmul",
+    "tmuls",
     "tor_",
+    "tors",
     "trans",
     "trecip",
     "trelu",
     "trow_expand",
+    "trow_expand_add",
     "trow_expand_div",
+    "trow_expand_max",
+    "trow_expand_min",
     "trow_expand_mul",
     "trow_expand_sub",
     "trow_max",
     "trow_min",
     "trow_sum",
     "trsqrt",
+    "tshl",
+    "tshls",
+    "tshr",
+    "tshrs",
     "tsort32",
     "tsqrt",
     "tsub",
+    "tsubs",
+    "txor",
+    "txors",
     "vector_copy",
     "vload",
     "vstore",
-    "xor",
 ]

@@ -18,6 +18,15 @@ from ._common import (
     vreg_type,
 )
 
+_CMP_MODE_BY_NAME = {
+    "EQ": pto.CmpMode.EQ,
+    "NE": pto.CmpMode.NE,
+    "LT": pto.CmpMode.LT,
+    "LE": pto.CmpMode.LE,
+    "GT": pto.CmpMode.GT,
+    "GE": pto.CmpMode.GE,
+}
+
 
 def adds(src, scalar, out):
     _call(pto.TAddSOp, src, scalar, out)
@@ -91,7 +100,7 @@ def shrs(src, scalar, out):
 
 def compare(src0, src1, out, *, mode):
     cmp_mode = (
-        pto.CmpModeAttr.get(getattr(pto.CmpMode, mode.upper()))
+        pto.CmpModeAttr.get(_CMP_MODE_BY_NAME[mode.upper()])
         if isinstance(mode, str)
         else mode
     )

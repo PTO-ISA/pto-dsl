@@ -178,8 +178,26 @@ def __getattr__(name):
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
-def PtrType(dtype):
-    return pto.PtrType.get(dtype)
+def _resolve_address_space(memory_space):
+    if memory_space is None:
+        return pto.AddressSpace.GM
+    if not isinstance(memory_space, str):
+        return memory_space
+    normalized = memory_space.strip().upper()
+    try:
+        return getattr(pto.AddressSpace, normalized)
+    except AttributeError as exc:
+        raise ValueError(f"Unsupported memory_space '{memory_space}'.") from exc
+
+
+def PtrType(dtype, memory_space=None):
+    if memory_space is None:
+        return pto.PtrType.get(dtype)
+    return pto.PtrType.get(dtype, _resolve_address_space(memory_space))
+
+
+def ptr(dtype, *, space=None):
+    return PtrType(dtype, memory_space=space)
 
 
 def TensorType(*, rank, dtype):
