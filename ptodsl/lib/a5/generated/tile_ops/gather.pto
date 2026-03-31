@@ -1,0 +1,56 @@
+module {
+  func.func @tile_op_gather(%arg0: !pto.ptr<f32, gm>, %arg1: !pto.ptr<ui32, gm>, %arg2: !pto.ptr<f32, gm>) {
+    %c64 = arith.constant 64 : index
+    %c1 = arith.constant 1 : index
+    %c1_0 = arith.constant 1 : index
+    %c64_1 = arith.constant 64 : index
+    %0 = pto.make_tensor_view %arg0, shape = [%c1_0, %c64_1], strides = [%c64, %c1] : !pto.tensor_view<?x?xf32>
+    %c64_2 = arith.constant 64 : index
+    %c1_3 = arith.constant 1 : index
+    %c1_4 = arith.constant 1 : index
+    %c64_5 = arith.constant 64 : index
+    %1 = pto.make_tensor_view %arg1, shape = [%c1_4, %c64_5], strides = [%c64_2, %c1_3] : !pto.tensor_view<?x?xui32>
+    %c64_6 = arith.constant 64 : index
+    %c1_7 = arith.constant 1 : index
+    %c1_8 = arith.constant 1 : index
+    %c64_9 = arith.constant 64 : index
+    %2 = pto.make_tensor_view %arg2, shape = [%c1_8, %c64_9], strides = [%c64_6, %c1_7] : !pto.tensor_view<?x?xf32>
+    pto.section.vector {
+      %c0 = arith.constant 0 : index
+      %c0_10 = arith.constant 0 : index
+      %c1_11 = arith.constant 1 : index
+      %c64_12 = arith.constant 64 : index
+      %3 = pto.partition_view %0, offsets = [%c0, %c0_10], sizes = [%c1_11, %c64_12] : !pto.tensor_view<?x?xf32> -> !pto.partition_tensor_view<1x64xf32>
+      %c0_13 = arith.constant 0 : index
+      %c0_14 = arith.constant 0 : index
+      %c1_15 = arith.constant 1 : index
+      %c64_16 = arith.constant 64 : index
+      %4 = pto.partition_view %1, offsets = [%c0_13, %c0_14], sizes = [%c1_15, %c64_16] : !pto.tensor_view<?x?xui32> -> !pto.partition_tensor_view<1x64xui32>
+      %c0_17 = arith.constant 0 : index
+      %c0_18 = arith.constant 0 : index
+      %c1_19 = arith.constant 1 : index
+      %c64_20 = arith.constant 64 : index
+      %5 = pto.partition_view %2, offsets = [%c0_17, %c0_18], sizes = [%c1_19, %c64_20] : !pto.tensor_view<?x?xf32> -> !pto.partition_tensor_view<1x64xf32>
+      %c0_i64 = arith.constant 0 : i64
+      %c256_i64 = arith.constant 256 : i64
+      %c512_i64 = arith.constant 512 : i64
+      %6 = pto.alloc_tile addr = %c0_i64 : !pto.tile_buf<vec, 1x64xf32>
+      %7 = pto.alloc_tile addr = %c256_i64 : !pto.tile_buf<vec, 1x64xui32>
+      %8 = pto.alloc_tile addr = %c512_i64 : !pto.tile_buf<vec, 1x64xf32>
+      pto.tload ins(%3 : !pto.partition_tensor_view<1x64xf32>) outs(%6 : !pto.tile_buf<vec, 1x64xf32>)
+      pto.tload ins(%4 : !pto.partition_tensor_view<1x64xui32>) outs(%7 : !pto.tile_buf<vec, 1x64xui32>)
+      %9 = pto.castptr %c0_i64 : i64 -> !pto.ptr<f32, ub>
+      %10 = pto.castptr %c256_i64 : i64 -> !pto.ptr<ui32, ub>
+      %11 = pto.castptr %c512_i64 : i64 -> !pto.ptr<f32, ub>
+      %c0_21 = arith.constant 0 : index
+      %12 = pto.pset_b32 "PAT_ALL" : !pto.mask
+      %13 = pto.vlds %10[%c0_21] : !pto.ptr<ui32, ub> -> !pto.vreg<64xui32>
+      %c64_22 = arith.constant 64 : index
+      %14 = pto.vgather2 %9, %13, %c64_22 : !pto.ptr<f32, ub>, !pto.vreg<64xui32>, index -> !pto.vreg<64xf32>
+      pto.vsts %14, %11[%c0_21], %12 : !pto.vreg<64xf32>, !pto.ptr<f32, ub>, !pto.mask
+      pto.tstore ins(%8 : !pto.tile_buf<vec, 1x64xf32>) outs(%5 : !pto.partition_tensor_view<1x64xf32>)
+    }
+    return
+  }
+}
+
