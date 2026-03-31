@@ -6,7 +6,18 @@ from . import scalar
 def __getattr__(name):
     # MLIR type factories require an active context, so keep dtype aliases lazy
     # and resolve them only when user code accesses them inside PTO/MLIR setup.
-    if name in {"bool", "float16", "float32", "int16", "int32", "uint32"}:
+    if name in {
+        "bool",
+        "float16",
+        "float32",
+        "bfloat16",
+        "int16",
+        "int32",
+        "int8",
+        "uint32",
+        "uint16",
+        "uint8",
+    }:
         return getattr(scalar, name)
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
@@ -125,7 +136,11 @@ __all__ = [
     "bool",
     "float16",
     "float32",
+    "bfloat16",
     "int16",
     "int32",
+    "int8",
     "uint32",
+    "uint16",
+    "uint8",
 ]

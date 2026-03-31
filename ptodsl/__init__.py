@@ -1,4 +1,4 @@
-from . import pto, scalar, tile
+from . import micro, pto, scalar, tile
 from .bench import do_bench
 from .compiler.ir import to_ir_module
 from .compiler.jit import JitWrapper, jit
@@ -10,6 +10,7 @@ __all__ = [
     "const_expr",
     "do_bench",
     "jit",
+    "micro",
     "pto",
     "range_constexpr",
     "scalar",

@@ -1,5 +1,6 @@
+from mlir import ir as mlir_ir
 from mlir.dialects import arith
-from mlir.ir import F16Type, F32Type, IndexType, IntegerType
+from mlir.ir import IndexType, IntegerType
 
 
 def _unwrap(value):
@@ -84,21 +85,39 @@ def wrap_value(value):
     return Value(value)
 
 
+def _get_mlir_float_type(alias_name, *type_names):
+    for type_name in type_names:
+        type_ctor = getattr(mlir_ir, type_name, None)
+        if type_ctor is not None:
+            return type_ctor.get()
+    supported = ", ".join(type_names)
+    raise AttributeError(
+        f"module '{__name__}' has no attribute '{alias_name}' because the active MLIR "
+        f"Python bindings do not expose any of: {supported}"
+    )
+
+
 def __getattr__(name):
-    # TODO: add more builtin dtype aliases (for example float16/bfloat16/int8/int64)
-    # when they are validated against PTO type support.
     if name == "bool":
         return IntegerType.get_signless(1)
     if name == "float32":
-        return F32Type.get()
+        return _get_mlir_float_type(name, "F32Type", "Float32Type")
     if name == "float16":
-        return F16Type.get()
+        return _get_mlir_float_type(name, "F16Type", "Float16Type")
+    if name == "bfloat16":
+        return _get_mlir_float_type(name, "BF16Type")
     if name == "int32":
         return IntegerType.get_signless(32)
     if name == "int16":
         return IntegerType.get_signless(16)
+    if name == "int8":
+        return IntegerType.get_signless(8)
     if name == "uint32":
         return IntegerType.get_unsigned(32)
+    if name == "uint16":
+        return IntegerType.get_unsigned(16)
+    if name == "uint8":
+        return IntegerType.get_unsigned(8)
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
@@ -156,6 +175,16 @@ __all__ = [
     "Value",
     "_unwrap",
     "wrap_value",
+    "bool",
+    "float16",
+    "float32",
+    "bfloat16",
+    "int32",
+    "int16",
+    "int8",
+    "uint32",
+    "uint16",
+    "uint8",
     "const",
     "index_cast",
     "ceil_div",
