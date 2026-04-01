@@ -410,6 +410,12 @@ TILE_OP_KERNEL_SPECS = {
         ),
         "expected_tokens": ["pto.vcmax"],
     },
+    "row_prod": {
+        "builder": lambda: _row_reduce_kernel(
+            "tile_op_row_prod", ops.trow_prod, dtype_name="float32"
+        ),
+        "expected_tokens": ["pto.vmul", "pto.vintlv"],
+    },
     "row_expand": {
         "builder": lambda: _row_expand_kernel(
             "tile_op_row_expand", ops.trow_expand, dtype_name="float32"
@@ -451,6 +457,12 @@ TILE_OP_KERNEL_SPECS = {
             "tile_op_col_max", ops.tcol_max, dtype_name="float32"
         ),
         "expected_tokens": ["pto.vmax"],
+    },
+    "col_prod": {
+        "builder": lambda: _col_reduce_kernel(
+            "tile_op_col_prod", ops.tcol_prod, dtype_name="float32"
+        ),
+        "expected_tokens": ["pto.vmul"],
     },
     "col_expand": {
         "builder": lambda: _col_expand_kernel(

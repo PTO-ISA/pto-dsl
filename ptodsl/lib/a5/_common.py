@@ -77,6 +77,10 @@ def uint32_type():
     return IntegerType.get_unsigned(32)
 
 
+def uint16_type():
+    return IntegerType.get_unsigned(16)
+
+
 def const_i64(value):
     i64 = IntegerType.get_signless(64)
     return arith.ConstantOp(i64, IntegerAttr.get(i64, value)).result
@@ -505,11 +509,13 @@ def check_tscalar_operands(src_view, out_view, *, dtype, shape, context, allowed
     return rows, cols
 
 
-def check_tbinop_operands(lhs_view, rhs_view, out_view, *, dtype, shape, context):
+def check_tbinop_operands(
+    lhs_view, rhs_view, out_view, *, dtype, shape, context, allowed=None
+):
     rows, cols = require_static_matrix_shape(shape, context=context)
     require_supported_dtype(
         dtype,
-        allowed={"f32", "f16", "bf16", "i32", "u32", "i16", "u16", "i8", "u8"},
+        allowed=allowed or {"f32", "f16", "bf16", "i32", "u32", "i16", "u16", "i8", "u8"},
         message=f"Fix: {context} has invalid data type.",
     )
     for view, label in ((lhs_view, "src0"), (rhs_view, "src1"), (out_view, "dst")):
@@ -586,11 +592,13 @@ def check_col_expand_operands(src_view, out_view, *, dtype, shape, context):
     return rows, cols
 
 
-def check_row_reduce_operands(src_view, out_view, *, dtype, shape, context):
+def check_row_reduce_operands(
+    src_view, out_view, *, dtype, shape, context, allowed=None
+):
     rows, cols = require_static_matrix_shape(shape, context=context)
     require_supported_dtype(
         dtype,
-        allowed={"f32", "f16"},
+        allowed=allowed or {"f32", "f16"},
         message=f"Fix: {context} input data type is not supported.",
     )
     require_view_shape(
@@ -616,11 +624,13 @@ def check_row_reduce_operands(src_view, out_view, *, dtype, shape, context):
     return rows, cols
 
 
-def check_col_reduce_operands(src_view, out_view, *, dtype, shape, context):
+def check_col_reduce_operands(
+    src_view, out_view, *, dtype, shape, context, allowed=None
+):
     rows, cols = require_static_matrix_shape(shape, context=context)
     require_supported_dtype(
         dtype,
-        allowed={"f32", "f16"},
+        allowed=allowed or {"f32", "f16"},
         message=f"Fix: {context} input data type is not supported.",
     )
     require_view_shape(
@@ -674,6 +684,136 @@ def check_gather_operands(
             view,
             view_dtype,
             message=f"Fix: TGATHER {label} data type mismatch.",
+        )
+    return rows, cols
+
+
+def check_gatherb_operands(
+    src_view, indices_view, out_view, *, dtype, index_dtype, shape
+):
+    rows, cols = require_static_matrix_shape(shape, context="TGATHERB")
+    require_supported_dtype(
+        dtype,
+        allowed={"f32", "f16", "bf16", "i32", "u32", "i16", "u16", "i8", "u8"},
+        message="Fix: TGATHERB source data type is not supported.",
+    )
+    require_supported_dtype(
+        index_dtype,
+        allowed={"u32"},
+        message="Fix: TGATHERB index data type must be uint32.",
+    )
+    require_view_dtype(
+        src_view,
+        dtype,
+        message="Fix: TGATHERB source data type mismatch.",
+    )
+    for view, label, view_dtype in (
+        (indices_view, "indices", index_dtype),
+        (out_view, "dst", dtype),
+    ):
+        require_view_shape(
+            view,
+            [rows, cols],
+            message=f"Fix: TGATHERB {label} valid shape mismatch.",
+        )
+        require_view_dtype(
+            view,
+            view_dtype,
+            message=f"Fix: TGATHERB {label} data type mismatch.",
+        )
+    return rows, cols
+
+
+def check_scatter_operands(
+    src_view, indices_view, out_view, *, dtype, index_dtype, shape
+):
+    rows, cols = require_static_matrix_shape(shape, context="TSCATTER")
+    dtype_token_value = require_supported_dtype(
+        dtype,
+        allowed={"f32", "f16", "bf16", "i32", "u32", "i16", "u16", "i8", "u8"},
+        message="Fix: TSCATTER source data type is not supported.",
+    )
+    index_token_value = require_supported_dtype(
+        index_dtype,
+        allowed={"u32", "i32", "u16", "i16"},
+        message="Fix: TSCATTER index data type is not supported.",
+    )
+    dtype_width = dtype_byte_width(dtype)
+    index_width = dtype_byte_width(index_dtype)
+    if not (
+        (dtype_width == 4 and index_width == 4)
+        or (dtype_width == 2 and index_width == 2)
+        or (dtype_width == 1 and index_width == 2)
+    ):
+        raise ValueError("Fix: TSCATTER invalid data type of idx.")
+    for view, label, view_dtype in (
+        (src_view, "src", dtype),
+        (indices_view, "idx", index_dtype),
+        (out_view, "dst", dtype),
+    ):
+        require_view_shape(
+            view,
+            [rows, cols],
+            message=f"Fix: TSCATTER input tile {label} valid shape mismatch.",
+        )
+        require_view_dtype(
+            view,
+            view_dtype,
+            message=f"Fix: TSCATTER {label} data type mismatch.",
+        )
+    return rows, cols, dtype_token_value, index_token_value
+
+
+def check_tsel_operands(mask_view, lhs_view, rhs_view, out_view, *, dtype, shape):
+    rows, cols = require_static_matrix_shape(shape, context="TSEL")
+    require_supported_dtype(
+        dtype,
+        allowed={"f32"},
+        message="Fix: TSEL only support 32-bit float data tiles.",
+    )
+    require_view_shape(
+        mask_view,
+        [rows, cols],
+        message="Fix: TSEL requires matching source, mask, and destination valid region.",
+    )
+    mask_token = extract_tensor_dtype_token(mask_view)
+    if mask_token not in {"i8", "u8"}:
+        raise ValueError("Fix: TSEL currently requires i8 or u8 mask tiles.")
+    for view, label in ((lhs_view, "src0"), (rhs_view, "src1"), (out_view, "dst")):
+        require_view_shape(
+            view,
+            [rows, cols],
+            message=f"Fix: TSEL input tile {label} valid shape mismatch.",
+        )
+        require_view_dtype(
+            view,
+            dtype,
+            message="Fix: TSEL only support same data type between dst, src0, and src1.",
+        )
+    return rows, cols
+
+
+def check_tsels_operands(mask_view, src_view, out_view, *, dtype, shape):
+    rows, cols = require_static_matrix_shape(shape, context="TSELS")
+    require_supported_dtype(
+        dtype,
+        allowed={"f32", "f16", "bf16", "i32", "u32", "i16", "u16", "i8", "u8"},
+        message="TSELS: Invalid data type",
+    )
+    for view, label, view_dtype in (
+        (mask_view, "mask", dtype),
+        (src_view, "src", dtype),
+        (out_view, "dst", dtype),
+    ):
+        require_view_shape(
+            view,
+            [rows, cols],
+            message=f"Fix: TSELS {label} valid shape mismatch.",
+        )
+        require_view_dtype(
+            view,
+            view_dtype,
+            message="TileType of dst and src must be the same.",
         )
     return rows, cols
 
@@ -747,12 +887,16 @@ __all__ = [
     "check_col_expand_operands",
     "check_col_reduce_operands",
     "check_gather_operands",
+    "check_gatherb_operands",
     "check_mrgsort_operands",
     "check_row_expand_operands",
     "check_row_reduce_operands",
+    "check_scatter_operands",
     "check_sort32_operands",
     "check_tscalar_operands",
     "check_tbinop_operands",
+    "check_tsel_operands",
+    "check_tsels_operands",
     "const_expr",
     "const_float",
     "const_scalar",
@@ -783,5 +927,6 @@ __all__ = [
     "store_view",
     "tail_mask",
     "uint32_type",
+    "uint16_type",
     "vreg_type",
 ]

@@ -465,6 +465,62 @@ def taxpy(
     )
 
 
+def texpands(
+    scalar,
+    out_view,
+    *,
+    dtype,
+    tile_shape=None,
+    shape=None,
+    valid_row=None,
+    valid_col=None,
+    valid_shape=None,
+    lanes=None,
+    base_addr=0,
+):
+    rows, cols, valid_row, valid_col, type_valid_shape = resolve_tile_spec(
+        tile_shape=tile_shape,
+        shape=shape,
+        valid_row=valid_row,
+        valid_col=valid_col,
+        valid_shape=valid_shape,
+        context="TEXPANDS",
+    )
+    rows, cols = check_tscalar_operands(
+        out_view,
+        out_view,
+        dtype=dtype,
+        shape=[rows, cols],
+        context="TEXPANDS",
+    )
+    lanes = resolve_lanes(dtype, lanes)
+    element_count = rows * cols
+    out_addr = const_i64(base_addr)
+    out_tile = alloc_tile_buffer(
+        dtype,
+        [rows, cols],
+        space="VEC",
+        addr=out_addr,
+        valid_shape=type_valid_shape,
+        valid_row=valid_row,
+        valid_col=valid_col,
+    )
+    out_ptr = pto.castptr(ptr(dtype, space="VEC"), out_addr)
+    vector_type = vreg_type(lanes, dtype)
+    scalar_value = raw(scalar)
+    if not hasattr(scalar_value, "type"):
+        scalar_value = const_scalar(dtype, scalar)
+    fill_vec = pto.vbr(vector_type, scalar_value)
+
+    for offset in range_constexpr(0, element_count, lanes):
+        active = flat_active_lanes(valid_row, valid_col, offset, lanes)
+        mask = mask_for_chunk(dtype, active)
+        pto.vsts(fill_vec, out_ptr, raw(s.const(offset)), mask)
+
+    store_view(out_tile, out_view)
+    return out_view
+
+
 def _scalar_tile_vop(
     src_view,
     scalar,
@@ -783,6 +839,7 @@ __all__ = [
     "VF_IMPL_2D_NO_POST_UPDATE",
     "VF_IMPL_2D_POST_UPDATE",
     "taxpy",
+    "texpands",
     "tadds",
     "tands",
     "tdivs",

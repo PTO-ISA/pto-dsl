@@ -1,11 +1,11 @@
 # A5 Header Coverage
 
 - Total A5 headers tracked: `116`
-- Implemented: `49`
+- Implemented: `57`
 - Partial: `2`
 - Native only: `11`
-- Pending: `35`
-- Blocked/meta: `19`
+- Pending: `29`
+- Blocked/meta: `17`
 
 | header | status | helper | note |
 | --- | --- | --- | --- |
@@ -35,7 +35,7 @@
 | `TColExpandSub` | `implemented` | `tcol_expand_sub` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
 | `TColMax` | `implemented` | `tcol_max` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
 | `TColMin` | `implemented` | `tcol_min` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
-| `TColProd` | `blocked` | `-` | No column-product micro lowering is wired yet. |
+| `TColProd` | `implemented` | `tcol_prod` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
 | `TColReduceIdx` | `pending` | `-` | Indexed column reduction is not implemented yet. |
 | `TColReduceOps` | `implemented` | `treduce._tcol_reduce` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
 | `TColSum` | `implemented` | `tcol_sum` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
@@ -44,13 +44,13 @@
 | `TDeQuant` | `pending` | `-` | Quantization/dequantization path is not implemented yet. |
 | `TDiv` | `implemented` | `tdiv` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
 | `TDivS` | `implemented` | `tdivs` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
-| `TExpandS` | `pending` | `-` | Scalar expand helper is not implemented yet. |
+| `TExpandS` | `implemented` | `texpands` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
 | `TExtract` | `native` | `extract` | Still forwarded to the native PTO tile builder. |
 | `TFMod` | `pending` | `-` | Fmod lowering is not implemented yet. |
 | `TFModS` | `pending` | `-` | Scalar fmod lowering is not implemented yet. |
 | `TFillPad` | `pending` | `-` | Pad/fill helper is not implemented yet. |
 | `TGather` | `partial` | `tgather` | Indexed gather is implemented via vgather2; mask-pattern gather still needs missing vsqz-style micro support. |
-| `TGatherB` | `pending` | `-` | GatherB lowering is not implemented yet, even though vgatherb exists in the micro surface. |
+| `TGatherB` | `implemented` | `tgatherb` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
 | `TGetScaleAddr` | `pending` | `-` | Scale-address helper is not represented in the PTODSL A5 layer. |
 | `THistogram` | `pending` | `-` | Histogram lowering is not implemented yet. |
 | `TImg2col` | `blocked` | `-` | Hardware layout/state programming path, not a straightforward vector-micro rewrite target. |
@@ -76,7 +76,7 @@
 | `TPartMul` | `pending` | `-` | Part-op lowering is not implemented yet. |
 | `TPop` | `blocked` | `-` | Runtime buffer stack/state helper, not a direct vector tile rewrite target. |
 | `TPrefetch` | `blocked` | `-` | Prefetch/runtime helper, not a direct vector tile rewrite target. |
-| `TPrelu` | `pending` | `-` | PReLU lowering is not implemented yet. |
+| `TPrelu` | `implemented` | `tprelu` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
 | `TPrint` | `native` | `native print` | Still forwarded to the native PTO tile builder. |
 | `TPush` | `blocked` | `-` | Runtime buffer stack/state helper, not a direct vector tile rewrite target. |
 | `TQuant` | `pending` | `-` | Quantization path is not implemented yet. |
@@ -93,13 +93,13 @@
 | `TRowExpandMin` | `implemented` | `trow_expand_min` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
 | `TRowExpandMul` | `implemented` | `trow_expand_mul` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
 | `TRowExpandSub` | `implemented` | `trow_expand_sub` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
-| `TRowProd` | `blocked` | `-` | No row-product micro lowering is wired yet. |
+| `TRowProd` | `implemented` | `trow_prod` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
 | `TRowReduce` | `implemented` | `treduce._trow_reduce` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
 | `TRowReduceIdx` | `pending` | `-` | Indexed row reduction is not implemented yet. |
 | `TRsqrt` | `implemented` | `trsqrt` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
-| `TScatter` | `pending` | `-` | Scatter lowering is not implemented yet, even though vscatter exists in the micro surface. |
-| `TSel` | `pending` | `-` | Packed-mask select lowering is not implemented yet. |
-| `TSels` | `pending` | `-` | Scalar/mask select lowering is not implemented yet. |
+| `TScatter` | `implemented` | `tscatter` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
+| `TSel` | `implemented` | `tsel` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
+| `TSels` | `implemented` | `tsels` | Rewritten with PTO micro instructions in the PTODSL A5 layer. |
 | `TSetFmatrix` | `blocked` | `-` | Hardware state setup header, not a straightforward vector-micro rewrite target. |
 | `TSetImg2colPadding` | `blocked` | `-` | Hardware state setup header, not a straightforward vector-micro rewrite target. |
 | `TSetImg2colRpt` | `blocked` | `-` | Hardware state setup header, not a straightforward vector-micro rewrite target. |

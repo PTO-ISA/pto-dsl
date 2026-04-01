@@ -18,6 +18,7 @@ from ._common import (
     const_i64,
     dtype_byte_width,
     flat_active_lanes,
+    mask_type,
     mask_for_chunk,
     matrix_active_lanes,
     normalize_vf_impl_kind,
@@ -29,6 +30,7 @@ from ._common import (
     s,
     store_view,
     load_view,
+    const_scalar,
     vreg_type,
 )
 
@@ -467,6 +469,47 @@ def tmov(
     return out_view
 
 
+def tprelu(
+    lhs_view,
+    rhs_view,
+    out_view,
+    *,
+    dtype,
+    tile_shape=None,
+    shape=None,
+    valid_row=None,
+    valid_col=None,
+    valid_shape=None,
+    lanes=None,
+    base_addr=0,
+    impl=VF_IMPL_DEFAULT,
+):
+    zero_scalar = const_scalar(dtype, 0)
+
+    def emit_prelu(vector_type, lhs_vec, rhs_vec, mask):
+        neg_vec = pto.vmul(vector_type, lhs_vec, rhs_vec, mask)
+        cmp_mask = pto.vcmps(mask_type(), lhs_vec, zero_scalar, mask, "gt")
+        return pto.vsel(vector_type, lhs_vec, neg_vec, cmp_mask)
+
+    return _binary_tile_vop(
+        lhs_view,
+        rhs_view,
+        out_view,
+        dtype=dtype,
+        tile_shape=tile_shape,
+        shape=shape,
+        valid_row=valid_row,
+        valid_col=valid_col,
+        valid_shape=valid_shape,
+        lanes=lanes,
+        base_addr=base_addr,
+        context="TPRELU",
+        micro_op=emit_prelu,
+        impl=impl,
+        allowed_dtypes={"f32", "f16"},
+    )
+
+
 def _binary_tile_vop(
     lhs_view,
     rhs_view,
@@ -483,6 +526,7 @@ def _binary_tile_vop(
     context,
     micro_op,
     impl,
+    allowed_dtypes=None,
 ):
     rows, cols, valid_row, valid_col, type_valid_shape = resolve_tile_spec(
         tile_shape=tile_shape,
@@ -499,6 +543,7 @@ def _binary_tile_vop(
         dtype=dtype,
         shape=[rows, cols],
         context=context,
+        allowed=allowed_dtypes,
     )
     lanes = resolve_lanes(dtype, lanes)
     element_count = rows * cols
@@ -745,6 +790,7 @@ __all__ = [
     "tmov",
     "tmul",
     "tor_",
+    "tprelu",
     "tshl",
     "tshr",
     "tsub",
