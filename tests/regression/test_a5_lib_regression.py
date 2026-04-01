@@ -663,14 +663,18 @@ def test_a5_tsel_emits_plds_pintlv_and_vsel():
         }
 
     @to_ir_module(meta_data=meta_data)
-    def a5_tsel(mask: "ptr_mask", src0: "ptr_data", src1: "ptr_data", dst: "ptr_data") -> None:
+    def a5_tsel(
+        mask: "ptr_mask", src0: "ptr_data", src1: "ptr_data", dst: "ptr_data"
+    ) -> None:
         mask_view = _make_tensor(mask, shape=[1, 128], dtype=pto.int8)
         lhs = _make_tensor(src0, shape=[1, 128], dtype=pto.float32)
         rhs = _make_tensor(src1, shape=[1, 128], dtype=pto.float32)
         out = _make_tensor(dst, shape=[1, 128], dtype=pto.float32)
         with pto.vector_section():
             a5.tsel(
-                _slice_tensor(mask_view, offsets=[0, 0], sizes=[1, 128], dtype=pto.int8),
+                _slice_tensor(
+                    mask_view, offsets=[0, 0], sizes=[1, 128], dtype=pto.int8
+                ),
                 _slice_tensor(lhs, offsets=[0, 0], sizes=[1, 128], dtype=pto.float32),
                 _slice_tensor(rhs, offsets=[0, 0], sizes=[1, 128], dtype=pto.float32),
                 _slice_tensor(out, offsets=[0, 0], sizes=[1, 128], dtype=pto.float32),
@@ -700,10 +704,16 @@ def test_a5_tsels_emits_vcmps_vdup_and_vsel():
         scalar = arith.ConstantOp(pto.float32, 3.0).result
         with pto.vector_section():
             a5.tsels(
-                _slice_tensor(mask_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32),
-                _slice_tensor(src_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32),
+                _slice_tensor(
+                    mask_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32
+                ),
+                _slice_tensor(
+                    src_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32
+                ),
                 scalar,
-                _slice_tensor(dst_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32),
+                _slice_tensor(
+                    dst_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32
+                ),
                 dtype=pto.float32,
                 shape=[1, 64],
             )

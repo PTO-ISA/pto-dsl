@@ -515,7 +515,8 @@ def check_tbinop_operands(
     rows, cols = require_static_matrix_shape(shape, context=context)
     require_supported_dtype(
         dtype,
-        allowed=allowed or {"f32", "f16", "bf16", "i32", "u32", "i16", "u16", "i8", "u8"},
+        allowed=allowed
+        or {"f32", "f16", "bf16", "i32", "u32", "i16", "u16", "i8", "u8"},
         message=f"Fix: {context} has invalid data type.",
     )
     for view, label in ((lhs_view, "src0"), (rhs_view, "src1"), (out_view, "dst")):
