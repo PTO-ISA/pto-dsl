@@ -23,7 +23,7 @@
 | `row_sum` | `generated` | `tile_ops/row_sum.pto` | Static-shape row reduction via vcadd + point-store. |
 | `row_min` | `generated` | `tile_ops/row_min.pto` | Static-shape row reduction via vcmin + point-store. |
 | `row_max` | `generated` | `tile_ops/row_max.pto` | Static-shape row reduction via vcmax + point-store. |
-| `row_prod` | `blocked` | - | No row-product micro lowering is wired yet. |
+| `row_prod` | `generated` | `tile_ops/row_prod.pto` | Static-shape row reduction via vmul + vintlv tree reduction + point-store. |
 | `row_expand` | `generated` | `tile_ops/row_expand.pto` | Static-shape canonical broadcast via vldas/vldus/vdup/vsts. |
 | `row_expand_sub` | `generated` | `tile_ops/row_expand_sub.pto` | Static-shape canonical broadcast via vldas/vldus/vdup/vsub/vsts. |
 | `row_expand_div` | `generated` | `tile_ops/row_expand_div.pto` | Static-shape canonical broadcast via vldas/vldus/vdup/vdiv/vsts. |
@@ -31,7 +31,7 @@
 | `col_sum` | `generated` | `tile_ops/col_sum.pto` | Static-shape TColReduceOps-style column reduction via vadd. |
 | `col_min` | `generated` | `tile_ops/col_min.pto` | Static-shape TColReduceOps-style column reduction via vmin. |
 | `col_max` | `generated` | `tile_ops/col_max.pto` | Static-shape TColReduceOps-style column reduction via vmax. |
-| `col_prod` | `blocked` | - | No column-product micro lowering is wired yet. |
+| `col_prod` | `generated` | `tile_ops/col_prod.pto` | Static-shape TColReduceOps-style column reduction via vmul. |
 | `col_expand` | `generated` | `tile_ops/col_expand.pto` | Static-shape canonical broadcast via vlds/vsts replication. |
 | `mrgsort` | `generated` | `tile_ops/mrgsort.pto` | Single-list row-major merge sort via vmrgsort4. |
 | `sort32` | `generated` | `tile_ops/sort32.pto` | Static-shape block sort via vbitsort. |

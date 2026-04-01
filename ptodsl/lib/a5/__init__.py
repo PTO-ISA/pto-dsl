@@ -1,4 +1,15 @@
-from . import native, ops, tbinary, texpand, treduce, tscalar, tsort, tunary
+from . import (
+    native,
+    ops,
+    tbinary,
+    texpand,
+    tindex,
+    tselect,
+    treduce,
+    tscalar,
+    tsort,
+    tunary,
+)
 from .a5_header_coverage import A5_HEADER_COVERAGE, a5_header_coverage_markdown
 from .kernels import (
     HIVM_LLVM_KERNELS,
@@ -41,6 +52,8 @@ __all__ = list(ops.__all__) + [
     "native",
     "tbinary",
     "texpand",
+    "tindex",
+    "tselect",
     "treduce",
     "tscalar",
     "tsort",

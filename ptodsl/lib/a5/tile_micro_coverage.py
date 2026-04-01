@@ -107,9 +107,9 @@ TILE_MICRO_COVERAGE = {
         "note": "Static-shape row reduction via vcmax + point-store.",
     },
     "row_prod": {
-        "status": "blocked",
-        "helper": None,
-        "note": "No row-product micro lowering is wired yet.",
+        "status": "implemented",
+        "helper": "trow_prod",
+        "note": "Static-shape row reduction via vmul + vintlv tree reduction + point-store.",
     },
     "row_expand": {
         "status": "implemented",
@@ -147,9 +147,9 @@ TILE_MICRO_COVERAGE = {
         "note": "Static-shape TColReduceOps-style column reduction via vmax.",
     },
     "col_prod": {
-        "status": "blocked",
-        "helper": None,
-        "note": "No column-product micro lowering is wired yet.",
+        "status": "implemented",
+        "helper": "tcol_prod",
+        "note": "Static-shape TColReduceOps-style column reduction via vmul.",
     },
     "col_expand": {
         "status": "implemented",

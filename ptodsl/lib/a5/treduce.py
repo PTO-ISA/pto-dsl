@@ -18,8 +18,8 @@ from ._common import (
     check_col_reduce_operands,
     check_row_reduce_operands,
     const_expr,
-    const_float,
     const_i64,
+    const_scalar,
     dtype_byte_width,
     full_mask,
     mask_for_chunk,
@@ -125,6 +125,95 @@ def trow_min(
     )
 
 
+def trow_prod(
+    src_view,
+    out_view,
+    *,
+    dtype,
+    tile_shape=None,
+    shape=None,
+    valid_row=None,
+    valid_col=None,
+    valid_shape=None,
+    base_addr=0,
+):
+    rows, cols, valid_row, valid_col, type_valid_shape = resolve_tile_spec(
+        tile_shape=tile_shape,
+        shape=shape,
+        valid_row=valid_row,
+        valid_col=valid_col,
+        valid_shape=valid_shape,
+        context="TROWPROD",
+    )
+    rows, cols = check_row_reduce_operands(
+        src_view,
+        out_view,
+        dtype=dtype,
+        shape=[rows, cols],
+        context="TROWPROD",
+        allowed={"f32", "f16", "i32", "i16"},
+    )
+    lanes = micro_lane_count(dtype)
+    width = dtype_byte_width(dtype)
+    vector_type = vreg_type(lanes, dtype)
+    loop_count = 0
+    active_lanes = lanes
+    while active_lanes > 1:
+        active_lanes //= 2
+        loop_count += 1
+
+    buf_bytes = rows * cols * width
+    src_addr = const_i64(base_addr)
+    out_addr = const_i64(base_addr + buf_bytes)
+
+    src_tile = alloc_tile_buffer(
+        dtype,
+        [rows, cols],
+        space="VEC",
+        addr=src_addr,
+        valid_shape=type_valid_shape,
+        valid_row=valid_row,
+        valid_col=valid_col,
+    )
+    out_tile = alloc_tile_buffer(
+        dtype,
+        [rows, cols],
+        space="VEC",
+        valid_shape=[type_valid_shape[0], 1],
+        addr=out_addr,
+        valid_row=valid_row,
+        valid_col=1,
+    )
+    load_view(src_view, src_tile)
+
+    src_ptr = pto.castptr(ptr(dtype, space="VEC"), src_addr)
+    out_ptr = pto.castptr(ptr(dtype, space="VEC"), out_addr)
+    vector_mask = full_mask(dtype)
+    one_scalar = const_scalar(dtype, 1)
+    one_vec = pto.vbr(vector_type, one_scalar)
+
+    for row in range_constexpr(rows):
+        accum = one_vec
+        for col in range_constexpr(0, cols, lanes):
+            active = matrix_active_lanes(valid_row, valid_col, row, col, lanes)
+            mask = mask_for_chunk(dtype, active)
+            offset = s.const(row * cols + col)
+            vec = pto.vlds(vector_type, src_ptr, raw(offset))
+            masked_vec = pto.vsel(vector_type, vec, one_vec, mask)
+            accum = pto.vmul(vector_type, accum, masked_vec, vector_mask)
+
+        for _ in range_constexpr(loop_count):
+            low, high = pto.vintlv(vector_type, vector_type, accum, one_vec)
+            accum = pto.vmul(vector_type, low, high, vector_mask)
+
+        out_offset = s.const(row * cols)
+        store_mask = mask_for_chunk(dtype, matrix_active_lanes(valid_row, 1, row, 0, 1))
+        pto.vsts(accum, out_ptr, raw(out_offset), store_mask, dist=onept_dist(dtype))
+
+    store_view(out_tile, out_view)
+    return out_view
+
+
 def tcol_sum(
     src_view,
     out_view,
@@ -152,6 +241,37 @@ def tcol_sum(
         reduce_op=pto.vadd,
         init_value=0.0,
         impl=impl,
+    )
+
+
+def tcol_prod(
+    src_view,
+    out_view,
+    *,
+    dtype,
+    tile_shape=None,
+    shape=None,
+    valid_row=None,
+    valid_col=None,
+    valid_shape=None,
+    base_addr=0,
+    impl=VF_IMPL_DEFAULT,
+):
+    return _tcol_reduce(
+        src_view,
+        out_view,
+        dtype=dtype,
+        tile_shape=tile_shape,
+        shape=shape,
+        valid_row=valid_row,
+        valid_col=valid_col,
+        valid_shape=valid_shape,
+        base_addr=base_addr,
+        context="TCOLPROD",
+        reduce_op=pto.vmul,
+        init_value=1,
+        impl=impl,
+        allowed_dtypes={"f32", "f16", "bf16", "i32", "u32", "i16", "u16"},
     )
 
 
@@ -278,7 +398,7 @@ def _trow_reduce(
     src_ptr = pto.castptr(ptr(dtype, space="VEC"), src_addr)
     out_ptr = pto.castptr(ptr(dtype, space="VEC"), out_addr)
     vector_mask = full_mask(dtype)
-    init_scalar = const_float(dtype, init_value)
+    init_scalar = const_scalar(dtype, init_value)
     neutral_vec = pto.vbr(vector_type, init_scalar)
 
     for row in range_constexpr(rows):
@@ -314,6 +434,7 @@ def _tcol_reduce(
     reduce_op,
     init_value,
     impl,
+    allowed_dtypes=None,
 ):
     validation_context = "TCOLREDUCE"
     rows, cols, valid_row, valid_col, type_valid_shape = resolve_tile_spec(
@@ -325,7 +446,12 @@ def _tcol_reduce(
         context=validation_context,
     )
     rows, cols = check_col_reduce_operands(
-        src_view, out_view, dtype=dtype, shape=[rows, cols], context=validation_context
+        src_view,
+        out_view,
+        dtype=dtype,
+        shape=[rows, cols],
+        context=validation_context,
+        allowed=allowed_dtypes,
     )
     lanes = micro_lane_count(dtype)
     buf_bytes = rows * cols * dtype_byte_width(dtype)
@@ -357,7 +483,7 @@ def _tcol_reduce(
     src_ptr = pto.castptr(ptr_type, src_addr)
     out_ptr = pto.castptr(ptr_type, out_addr)
     impl_kind = normalize_vf_impl_kind(impl)
-    init_scalar = const_float(dtype, init_value)
+    init_scalar = const_scalar(dtype, init_value)
     neutral_vec = pto.vbr(vector_type, init_scalar)
     vector_mask = full_mask(dtype)
     if const_expr(impl_kind == VF_IMPL_DEFAULT):
@@ -478,8 +604,10 @@ __all__ = [
     "VF_IMPL_2D_POST_UPDATE",
     "tcol_max",
     "tcol_min",
+    "tcol_prod",
     "tcol_sum",
     "trow_max",
     "trow_min",
+    "trow_prod",
     "trow_sum",
 ]

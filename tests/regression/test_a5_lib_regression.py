@@ -54,11 +54,17 @@ def _slice_tensor(source, *, offsets, sizes, dtype):
 
 def test_a5_split_modules_are_publicly_exposed():
     assert a5.tbinary.tadd is a5.tadd
+    assert a5.tbinary.tprelu is a5.tprelu
     assert a5.tscalar.tadds is a5.tadds
+    assert a5.tscalar.texpands is a5.texpands
     assert a5.tunary.trsqrt is a5.trsqrt
     assert a5.texpand.trow_expand is a5.trow_expand
     assert a5.treduce.trow_sum is a5.trow_sum
-    assert a5.tsort.tgather is a5.tgather
+    assert a5.tindex.tgather is a5.tgather
+    assert a5.tindex.tgatherb is a5.tgatherb
+    assert a5.tindex.tscatter is a5.tscatter
+    assert a5.tselect.tsel is a5.tsel
+    assert a5.tselect.tsels is a5.tsels
 
 
 def test_public_pto_ptr_supports_explicit_memory_spaces():
@@ -305,6 +311,79 @@ def test_a5_tgather_supports_dynamic_valid_bounds():
     assert "arith.index_cast" in text
 
 
+def test_a5_tgatherb_emits_byte_gather_micro_opcodes():
+    def uint32():
+        return IntegerType.get_unsigned(32)
+
+    def meta_data():
+        return {
+            "ptr_src": pto.PtrType(pto.float32),
+            "ptr_idx": pto.PtrType(uint32()),
+        }
+
+    @to_ir_module(meta_data=meta_data)
+    def a5_tgatherb(src: "ptr_src", idx: "ptr_idx", dst: "ptr_src") -> None:
+        src_view = _make_tensor(src, shape=[8, 64], dtype=pto.float32)
+        idx_view = _make_tensor(idx, shape=[8, 64], dtype=uint32())
+        dst_view = _make_tensor(dst, shape=[8, 64], dtype=pto.float32)
+        with pto.vector_section():
+            a5.tgatherb(
+                _slice_tensor(
+                    src_view, offsets=[0, 0], sizes=[8, 64], dtype=pto.float32
+                ),
+                _slice_tensor(idx_view, offsets=[0, 0], sizes=[8, 64], dtype=uint32()),
+                _slice_tensor(
+                    dst_view, offsets=[0, 0], sizes=[8, 64], dtype=pto.float32
+                ),
+                dtype=pto.float32,
+                index_dtype=uint32(),
+                shape=[8, 64],
+            )
+
+    text = str(a5_tgatherb)
+
+    assert "func.func @a5_tgatherb" in text
+    assert "pto.vgatherb" in text
+    assert "pto.tgatherb" not in text
+
+
+def test_a5_tscatter_emits_zero_fill_then_vscatter():
+    def uint32():
+        return IntegerType.get_unsigned(32)
+
+    def meta_data():
+        return {
+            "ptr_src": pto.PtrType(pto.float32),
+            "ptr_idx": pto.PtrType(uint32()),
+        }
+
+    @to_ir_module(meta_data=meta_data)
+    def a5_tscatter(src: "ptr_src", idx: "ptr_idx", dst: "ptr_src") -> None:
+        src_view = _make_tensor(src, shape=[8, 64], dtype=pto.float32)
+        idx_view = _make_tensor(idx, shape=[8, 64], dtype=uint32())
+        dst_view = _make_tensor(dst, shape=[8, 64], dtype=pto.float32)
+        with pto.vector_section():
+            a5.tscatter(
+                _slice_tensor(
+                    src_view, offsets=[0, 0], sizes=[8, 64], dtype=pto.float32
+                ),
+                _slice_tensor(idx_view, offsets=[0, 0], sizes=[8, 64], dtype=uint32()),
+                _slice_tensor(
+                    dst_view, offsets=[0, 0], sizes=[8, 64], dtype=pto.float32
+                ),
+                dtype=pto.float32,
+                index_dtype=uint32(),
+                shape=[8, 64],
+            )
+
+    text = str(a5_tscatter)
+
+    assert "func.func @a5_tscatter" in text
+    assert "pto.vbr" in text
+    assert "pto.vscatter" in text
+    assert "pto.tscatter" not in text
+
+
 def test_a5_trow_expand_emits_broadcast_micro_ops():
     def meta_data():
         return {
@@ -523,6 +602,131 @@ def test_a5_taxpy_emits_vmula():
     assert "pto.taxpy" not in text
 
 
+def test_a5_texpands_emits_vbr_and_vsts():
+    def meta_data():
+        return {"ptr_t": pto.PtrType(pto.float32)}
+
+    @to_ir_module(meta_data=meta_data)
+    def a5_texpands(dst: "ptr_t") -> None:
+        dst_view = _make_tensor(dst, shape=[8, 64], dtype=pto.float32)
+        scalar = arith.ConstantOp(pto.float32, 1.5).result
+        with pto.vector_section():
+            a5.texpands(
+                scalar,
+                _slice_tensor(
+                    dst_view, offsets=[0, 0], sizes=[8, 64], dtype=pto.float32
+                ),
+                dtype=pto.float32,
+                shape=[8, 64],
+            )
+
+    text = str(a5_texpands)
+
+    assert "func.func @a5_texpands" in text
+    assert "pto.vbr" in text
+    assert "pto.vsts" in text
+    assert "pto.texpands" not in text
+
+
+def test_a5_tprelu_emits_vcmps_vmul_and_vsel():
+    def meta_data():
+        return {"ptr_t": pto.PtrType(pto.float32)}
+
+    @to_ir_module(meta_data=meta_data)
+    def a5_tprelu(src0: "ptr_t", src1: "ptr_t", dst: "ptr_t") -> None:
+        lhs = _make_tensor(src0, shape=[8, 64], dtype=pto.float32)
+        rhs = _make_tensor(src1, shape=[8, 64], dtype=pto.float32)
+        out = _make_tensor(dst, shape=[8, 64], dtype=pto.float32)
+        with pto.vector_section():
+            a5.tprelu(
+                _slice_tensor(lhs, offsets=[0, 0], sizes=[8, 64], dtype=pto.float32),
+                _slice_tensor(rhs, offsets=[0, 0], sizes=[8, 64], dtype=pto.float32),
+                _slice_tensor(out, offsets=[0, 0], sizes=[8, 64], dtype=pto.float32),
+                dtype=pto.float32,
+                shape=[8, 64],
+            )
+
+    text = str(a5_tprelu)
+
+    assert "func.func @a5_tprelu" in text
+    assert "pto.vcmps" in text
+    assert "pto.vmul" in text
+    assert "pto.vsel" in text
+    assert "pto.tprelu" not in text
+
+
+def test_a5_tsel_emits_plds_pintlv_and_vsel():
+    def meta_data():
+        return {
+            "ptr_mask": pto.PtrType(pto.int8),
+            "ptr_data": pto.PtrType(pto.float32),
+        }
+
+    @to_ir_module(meta_data=meta_data)
+    def a5_tsel(
+        mask: "ptr_mask", src0: "ptr_data", src1: "ptr_data", dst: "ptr_data"
+    ) -> None:
+        mask_view = _make_tensor(mask, shape=[1, 128], dtype=pto.int8)
+        lhs = _make_tensor(src0, shape=[1, 128], dtype=pto.float32)
+        rhs = _make_tensor(src1, shape=[1, 128], dtype=pto.float32)
+        out = _make_tensor(dst, shape=[1, 128], dtype=pto.float32)
+        with pto.vector_section():
+            a5.tsel(
+                _slice_tensor(
+                    mask_view, offsets=[0, 0], sizes=[1, 128], dtype=pto.int8
+                ),
+                _slice_tensor(lhs, offsets=[0, 0], sizes=[1, 128], dtype=pto.float32),
+                _slice_tensor(rhs, offsets=[0, 0], sizes=[1, 128], dtype=pto.float32),
+                _slice_tensor(out, offsets=[0, 0], sizes=[1, 128], dtype=pto.float32),
+                dtype=pto.float32,
+                shape=[1, 128],
+            )
+
+    text = str(a5_tsel)
+
+    assert "func.func @a5_tsel" in text
+    assert "pto.pset_b16" in text
+    assert "pto.plds" in text
+    assert "pto.pintlv_b16" in text
+    assert "pto.vsel" in text
+    assert "pto.tsel" not in text
+
+
+def test_a5_tsels_emits_vcmps_vdup_and_vsel():
+    def meta_data():
+        return {"ptr_t": pto.PtrType(pto.float32)}
+
+    @to_ir_module(meta_data=meta_data)
+    def a5_tsels(mask: "ptr_t", src: "ptr_t", dst: "ptr_t") -> None:
+        mask_view = _make_tensor(mask, shape=[1, 64], dtype=pto.float32)
+        src_view = _make_tensor(src, shape=[1, 64], dtype=pto.float32)
+        dst_view = _make_tensor(dst, shape=[1, 64], dtype=pto.float32)
+        scalar = arith.ConstantOp(pto.float32, 3.0).result
+        with pto.vector_section():
+            a5.tsels(
+                _slice_tensor(
+                    mask_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32
+                ),
+                _slice_tensor(
+                    src_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32
+                ),
+                scalar,
+                _slice_tensor(
+                    dst_view, offsets=[0, 0], sizes=[1, 64], dtype=pto.float32
+                ),
+                dtype=pto.float32,
+                shape=[1, 64],
+            )
+
+    text = str(a5_tsels)
+
+    assert "func.func @a5_tsels" in text
+    assert "pto.vcmps" in text
+    assert "pto.vdup" in text
+    assert "pto.vsel" in text
+    assert "pto.tsels" not in text
+
+
 @pytest.mark.parametrize(
     ("helper_name", "micro_op", "tile_op"),
     [
@@ -583,15 +787,16 @@ def test_a5_expand_header_helpers_emit_micro_opcodes(helper_name, micro_op, tile
 
 
 @pytest.mark.parametrize(
-    ("helper_name", "reduce_op", "combine_op", "tile_op"),
+    ("helper_name", "reduce_op", "combine_op", "extra_token", "tile_op"),
     [
-        ("trow_sum", "pto.vcadd", "pto.vadd", "pto.trowsum"),
-        ("trow_max", "pto.vcmax", "pto.vmax", "pto.trowmax"),
-        ("trow_min", "pto.vcmin", "pto.vmin", "pto.trowmin"),
+        ("trow_sum", "pto.vcadd", "pto.vadd", None, "pto.trowsum"),
+        ("trow_max", "pto.vcmax", "pto.vmax", None, "pto.trowmax"),
+        ("trow_min", "pto.vcmin", "pto.vmin", None, "pto.trowmin"),
+        ("trow_prod", "pto.vmul", "pto.vmul", "pto.vintlv", "pto.trowprod"),
     ],
 )
 def test_a5_trow_reduce_emits_reduction_micro_ops(
-    helper_name, reduce_op, combine_op, tile_op
+    helper_name, reduce_op, combine_op, extra_token, tile_op
 ):
     def meta_data():
         return {
@@ -621,6 +826,8 @@ def test_a5_trow_reduce_emits_reduction_micro_ops(
 
     assert reduce_op in text
     assert combine_op in text
+    if extra_token is not None:
+        assert extra_token in text
     assert 'dist = "ONEPT_B32"' in text
     assert tile_op not in text
 
@@ -631,6 +838,7 @@ def test_a5_trow_reduce_emits_reduction_micro_ops(
         ("tcol_sum", "pto.vadd", "pto.tcolsum", a5.VF_IMPL_1D_POST_UPDATE),
         ("tcol_max", "pto.vmax", "pto.tcolmax", a5.VF_IMPL_1D_NO_POST_UPDATE),
         ("tcol_min", "pto.vmin", "pto.tcolmin", a5.VF_IMPL_1D_POST_UPDATE),
+        ("tcol_prod", "pto.vmul", "pto.tcolprod", a5.VF_IMPL_1D_POST_UPDATE),
     ],
 )
 def test_a5_tcol_reduce_emits_template_lowering(helper_name, reduce_op, tile_op, impl):

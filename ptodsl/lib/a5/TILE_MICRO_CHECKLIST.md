@@ -1,10 +1,10 @@
 # Tile Micro Coverage
 
 - Total public tile ops: `34`
-- Implemented: `26`
+- Implemented: `28`
 - Partial: `1`
 - Pending: `0`
-- Blocked: `6`
+- Blocked: `4`
 - Not applicable: `1`
 
 | tile op | helper | note |
@@ -30,7 +30,7 @@
 | `row_sum` | `trow_sum` | Static-shape row reduction via vcadd + point-store. |
 | `row_min` | `trow_min` | Static-shape row reduction via vcmin + point-store. |
 | `row_max` | `trow_max` | Static-shape row reduction via vcmax + point-store. |
-| `row_prod` | `-` | No row-product micro lowering is wired yet. |
+| `row_prod` | `trow_prod` | Static-shape row reduction via vmul + vintlv tree reduction + point-store. |
 | `row_expand` | `trow_expand` | Static-shape canonical broadcast via vldas/vldus/vdup/vsts. |
 | `row_expand_sub` | `trow_expand_sub` | Static-shape canonical broadcast via vldas/vldus/vdup/vsub/vsts. |
 | `row_expand_div` | `trow_expand_div` | Static-shape canonical broadcast via vldas/vldus/vdup/vdiv/vsts. |
@@ -38,7 +38,7 @@
 | `col_sum` | `tcol_sum` | Static-shape TColReduceOps-style column reduction via vadd. |
 | `col_min` | `tcol_min` | Static-shape TColReduceOps-style column reduction via vmin. |
 | `col_max` | `tcol_max` | Static-shape TColReduceOps-style column reduction via vmax. |
-| `col_prod` | `-` | No column-product micro lowering is wired yet. |
+| `col_prod` | `tcol_prod` | Static-shape TColReduceOps-style column reduction via vmul. |
 | `col_expand` | `tcol_expand` | Static-shape canonical broadcast via vlds/vsts replication. |
 | `mrgsort` | `tmrgsort` | Single-list row-major merge sort via vmrgsort4. |
 | `sort32` | `tsort32` | Static-shape block sort via vbitsort. |

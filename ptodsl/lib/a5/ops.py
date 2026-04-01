@@ -8,7 +8,6 @@ from ._common import (
     VF_IMPL_DEFAULT,
 )
 from .native import (
-    col_prod,
     compare,
     concat,
     extract,
@@ -22,15 +21,14 @@ from .native import (
     matmul_mx_acc,
     matmul_mx_bias,
     move_tile,
-    row_prod,
-    scatter,
-    select,
     store_tile,
     trans,
     vector_copy,
     vload,
     vstore,
 )
+from .tindex import tgather, tgatherb, tscatter
+from .tselect import tsel, tsels
 from .tbinary import (
     tand,
     tadd,
@@ -40,6 +38,7 @@ from .tbinary import (
     tmov,
     tmul,
     tor_,
+    tprelu,
     tshl,
     tshr,
     tsub,
@@ -64,13 +63,16 @@ from .texpand import (
 from .treduce import (
     tcol_max,
     tcol_min,
+    tcol_prod,
     tcol_sum,
     trow_max,
     trow_min,
+    trow_prod,
     trow_sum,
 )
 from .tscalar import (
     taxpy,
+    texpands,
     tadds,
     tands,
     tdivs,
@@ -84,7 +86,7 @@ from .tscalar import (
     tsubs,
     txors,
 )
-from .tsort import tgather, tmrgsort, tsort32
+from .tsort import tmrgsort, tsort32
 from .tunary import tabs, texp, tlog, trecip, trelu, trsqrt, tsqrt
 
 # A5-style aliases.
@@ -125,15 +127,26 @@ TSqrt = tsqrt
 TRsqrt = trsqrt
 TRecip = trecip
 TAxpy = taxpy
+TExpandS = texpands
 TGather = tgather
-TScatter = scatter
-TSel = select
+TGatherB = tgatherb
+TScatter = tscatter
+gatherb = tgatherb
+scatter = tscatter
+TSel = tsel
+TSelS = tsels
+TSels = tsels
+select = tsel
+selects = tsels
+TPrelu = tprelu
 TConcat = concat
 TExtract = extract
 TInsert = insert
 TRowSum = trow_sum
 TRowMin = trow_min
 TRowMax = trow_max
+TRowProd = trow_prod
+row_prod = trow_prod
 TRowExpand = trow_expand
 TRowExpandAdd = trow_expand_add
 TRowExpandSub = trow_expand_sub
@@ -144,6 +157,8 @@ TRowExpandMin = trow_expand_min
 TColSum = tcol_sum
 TColMin = tcol_min
 TColMax = tcol_max
+TColProd = tcol_prod
+col_prod = tcol_prod
 TColExpand = tcol_expand
 TColExpandAdd = tcol_expand_add
 TColExpandSub = tcol_expand_sub
@@ -173,6 +188,7 @@ __all__ = [
     "TAnd",
     "TAndS",
     "TAxpy",
+    "TExpandS",
     "TColExpand",
     "TColExpandAdd",
     "TColExpandDiv",
@@ -182,6 +198,7 @@ __all__ = [
     "TColExpandSub",
     "TColMax",
     "TColMin",
+    "TColProd",
     "TColSum",
     "TConcat",
     "TCmp",
@@ -190,6 +207,7 @@ __all__ = [
     "TExp",
     "TExtract",
     "TGather",
+    "TGatherB",
     "TInsert",
     "TLRelu",
     "TLoad",
@@ -212,6 +230,7 @@ __all__ = [
     "TMulS",
     "TOr",
     "TOrS",
+    "TPrelu",
     "TRecip",
     "TRelu",
     "TRowExpand",
@@ -223,10 +242,13 @@ __all__ = [
     "TRowExpandSub",
     "TRowMax",
     "TRowMin",
+    "TRowProd",
     "TRowSum",
     "TRsqrt",
     "TScatter",
     "TSel",
+    "TSelS",
+    "TSels",
     "TShl",
     "TShlS",
     "TShr",
@@ -239,11 +261,12 @@ __all__ = [
     "TTrans",
     "TXor",
     "TXorS",
-    "col_prod",
     "compare",
+    "col_prod",
     "concat",
     "extract",
     "full_mask_b32",
+    "gatherb",
     "insert",
     "load_tile",
     "matmul",
@@ -256,6 +279,7 @@ __all__ = [
     "row_prod",
     "scatter",
     "select",
+    "selects",
     "store_tile",
     "tabs",
     "tadd",
@@ -263,6 +287,7 @@ __all__ = [
     "tand",
     "tands",
     "taxpy",
+    "texpands",
     "tcol_expand",
     "tcol_expand_add",
     "tcol_expand_div",
@@ -272,11 +297,13 @@ __all__ = [
     "tcol_expand_sub",
     "tcol_max",
     "tcol_min",
+    "tcol_prod",
     "tcol_sum",
     "tdiv",
     "tdivs",
     "texp",
     "tgather",
+    "tgatherb",
     "tlrelu",
     "tlog",
     "tmax",
@@ -289,6 +316,7 @@ __all__ = [
     "tmuls",
     "tor_",
     "tors",
+    "tprelu",
     "trans",
     "trecip",
     "trelu",
@@ -301,7 +329,11 @@ __all__ = [
     "trow_expand_sub",
     "trow_max",
     "trow_min",
+    "trow_prod",
     "trow_sum",
+    "tscatter",
+    "tsel",
+    "tsels",
     "trsqrt",
     "tshl",
     "tshls",
