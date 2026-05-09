@@ -1,4 +1,5 @@
 import inspect
+import os
 
 from mlir.dialects import func, pto as _pto
 from mlir.ir import Attribute, Context, InsertionPoint, Location, Module, UnitAttr
@@ -160,7 +161,8 @@ def to_ir_module(*, meta_data, module=False):
             else:
                 _define(ir_module, ctx, meta_map, fn)
 
-            ir_module.operation.verify()
+            if os.environ.get("PTODSL_SKIP_VERIFY") not in ("1", "true", "TRUE", "yes", "YES"):
+                ir_module.operation.verify()
             return ir_module
 
     return decorator

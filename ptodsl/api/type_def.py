@@ -28,7 +28,20 @@ def PtrType(dtype):
     return _pto.PtrType.get(dtype)
 
 
-def TensorType(*, rank, dtype):
+def TensorType(*, rank=None, shape=None, dtype):
+    """Build a `!pto.tensor_view`.
+
+    Pass ``rank`` for a dynamic-shape view (``?x?xfp32``) or ``shape`` for a
+    statically-shaped one (``128x32xfp32``). The static form is required when
+    the lowered C++ runtime needs concrete `pto::Shape<...>` template params,
+    e.g. for the address-based slot model added by PR #606.
+    """
+    if shape is not None and rank is not None:
+        raise ValueError("TensorType: pass either rank or shape, not both")
+    if shape is not None:
+        return _pto.TensorViewType.get(list(shape), dtype)
+    if rank is None:
+        raise ValueError("TensorType: pass rank or shape")
     return _pto.TensorViewType.get(rank, dtype)
 
 
